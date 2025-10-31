@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyTrack AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4A90E2;
+            --secondary-color: #f0f2f5;
+            --text-color: #333;
+            --light-text-color: #666;
+            --white-color: #fff;
+            --shadow-light: 0 4px 10px rgba(0, 0, 0, 0.05);
+            --shadow-medium: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* General & Layout */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            margin: 0;
+            line-height: 1.6;
+            scroll-behavior: smooth;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header & Navigation */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background-color: var(--white-color);
+            box-shadow: var(--shadow-medium);
+            border-radius: 0 0 10px 10px;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 2em;
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            font-weight: 600;
+            color: var(--light-text-color);
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--text-color);
+        }
+
+        .nav-button {
+            text-decoration: none;
+            font-size: 1em;
+            font-weight: 600;
+            padding: 10px 25px;
+            color: var(--white-color);
+            background-color: var(--primary-color);
+            border-radius: 25px;
+            transition: background-color 0.3s ease;
+        }
+
+        .nav-button:hover {
+            background-color: #357ABD;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .hero h2 {
+            font-size: 3em;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 20px;
+        }
+
+        .hero p {
+            font-size: 1.2em;
+            color: var(--light-text-color);
+            max-width: 800px;
+            margin: 0 auto 30px;
+        }
+
+        .hero .nav-button {
+            padding: 15px 40px;
+            font-size: 1.1em;
+        }
+
+        /* Features Section */
+        .features {
+            background-color: var(--white-color);
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .features h2 {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 50px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        .feature-card {
+            background-color: var(--white-color);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: var(--shadow-light);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 3em;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        /* Call to Action Section */
+        .cta {
+            background-color: var(--primary-color);
+            color: var(--white-color);
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .cta h2 {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .cta .nav-button {
+            background-color: var(--white-color);
+            color: var(--primary-color);
+        }
+
+        .cta .nav-button:hover {
+            background-color: #e0e0e0;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--light-text-color);
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <header class="container header">
+        <h1 class="logo">StudyTrack AI</h1>
+        <nav class="nav">
+            <a href="/login" class="nav-link">Login</a>
+            <a href="/register" class="nav-button">Sign Up</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h2>Effortless Study Management with AI</h2>
+                <p>
+                    StudyTrack AI is your personal academic assistant. We use artificial intelligence to help you organize your study schedule, track your progress, and identify areas where you need to focus more.
+                </p>
+                <a href="/register" class="nav-button">Get Started Today</a>
+            </div>
+        </section>
+
+        <section id="features" class="features">
+            <div class="container">
+                <h2>Key Features</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <span class="feature-icon">🧠</span>
+                        <h3>AI-Powered Insights</h3>
+                        <p>Analyze your study habits and get personalized recommendations to optimize your learning.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">⏱️</span>
+                        <h3>Smart Time Tracking</h3>
+                        <p>Automatically log your study sessions and visualize your progress with easy-to-read charts.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">🎯</span>
+                        <h3>Goal Setting</h3>
+                        <p>Set clear academic goals and receive reminders to keep you focused and motivated.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="cta-section" class="cta">
+            <div class="container">
+                <h2>Ready to Transform Your Studies?</h2>
+                <a href="/register" class="nav-button">Sign Up for Free</a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 StudyTrack AI. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

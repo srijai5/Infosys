@@ -1,0 +1,635 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz Reminders | StudyPortal Admin</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary: #4361ee;
+      --secondary: #3f37c9;
+      --success: #4cc9f0;
+      --warning: #f72585;
+      --light: #f8f9fa;
+      --dark: #212529;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #f5f7ff 0%, #f0f4ff 100%);
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .glass-card {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+    }
+    
+    .sidebar-gradient {
+      background: linear-gradient(180deg, #4361ee 0%, #3a0ca3 100%);
+    }
+    
+    .gradient-text {
+      background: linear-gradient(135deg, var(--primary), var(--success));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .hover-lift {
+      transition: all 0.3s ease;
+    }
+    
+    .hover-lift:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    }
+
+    .chart-container {
+      position: relative;
+      height: 280px;
+      width: 100%;
+      min-height: 280px;
+      flex: 1;
+    }
+
+    .status-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    
+    .status-pending { background-color: #fef3c7; color: #92400e; }
+    .status-sent { background-color: #d1fae5; color: #065f46; }
+    .status-failed { background-color: #fee2e2; color: #991b1b; }
+  </style>
+</head>
+
+<body class="text-gray-800 antialiased">
+<div class="flex min-h-screen">
+
+  <!-- Enhanced Sidebar -->
+  <aside class="sidebar-gradient text-white w-64 fixed h-screen overflow-y-auto shadow-xl">
+    <div class="p-6 border-b border-blue-400/30">
+      <div class="flex items-center space-x-3">
+        <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
+          <i class="fas fa-graduation-cap text-blue-600 text-2xl"></i>
+        </div>
+        <div>
+          <h2 class="text-xl font-bold">StudyPortal</h2>
+          <p class="text-blue-200 text-xs">Admin Dashboard</p>
+        </div>
+      </div>
+    </div>
+    
+    <nav class="flex-1 p-4 space-y-2">
+      <a href="{% url 'admin_dashboard' %}" class="flex items-center space-x-3 p-3 text-blue-100 hover:bg-white/10 rounded-xl transition-all">
+        <i class="fas fa-chart-line w-5 text-center"></i>
+        <span>Dashboard</span>
+      </a>
+      <a href="{% url 'admin_students' %}" class="flex items-center space-x-3 p-3 text-blue-100 hover:bg-white/10 rounded-xl transition-all">
+        <i class="fas fa-users w-5 text-center"></i>
+        <span>Students</span>
+      </a>
+      <a href="{% url 'admin_courses' %}" class="flex items-center space-x-3 p-3 text-blue-100 hover:bg-white/10 rounded-xl transition-all">
+        <i class="fas fa-book w-5 text-center"></i>
+        <span>Courses</span>
+      </a>
+      
+      <!-- Quiz Management Section -->
+      <a href="{% url 'admin_quizzes' %}" class="flex items-center space-x-3 p-3 text-blue-100 hover:bg-white/10 rounded-xl transition-all">
+        <i class="fas fa-question-circle w-5 text-center"></i>
+        <span>Quiz Management</span>
+      </a>
+      <a href="{% url 'admin_quiz_reminders' %}" class="flex items-center space-x-3 p-3 bg-white/20 rounded-xl text-white font-medium">
+        <i class="fas fa-bell w-5 text-center"></i>
+        <span>Quiz Reminders</span>
+      </a>
+      <a href="{% url 'admin_quiz_results' %}" class="flex items-center space-x-3 p-3 text-blue-100 hover:bg-white/10 rounded-xl transition-all">
+        <i class="fas fa-chart-bar w-5 text-center"></i>
+        <span>Quiz Results</span>
+      </a>
+      
+      <!-- Other Sections -->
+      <a href="{% url 'assign_courses' %}" class="flex items-center space-x-3 p-3 text-blue-100 hover:bg-white/10 rounded-xl transition-all">
+        <i class="fas fa-tasks w-5 text-center"></i>
+        <span>Assign Courses</span>
+      </a>
+      <a href="{% url 'student_study_tracks' %}" class="flex items-center space-x-3 p-3 text-blue-100 hover:bg-white/10 rounded-xl transition-all">
+        <i class="fas fa-list-alt w-5 text-center"></i>
+        <span>Study Tracks</span>
+      </a>
+      <a href="{% url 'admin_analytics' %}" class="flex items-center space-x-3 p-3 text-blue-100 hover:bg-white/10 rounded-xl transition-all">
+        <i class="fas fa-chart-bar w-5 text-center"></i>
+        <span>Analytics</span>
+      </a>
+    </nav>
+    
+    <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-blue-400/30">
+      <div class="bg-white/10 rounded-lg p-3 text-center">
+        <p class="text-blue-200 text-sm">StudyPortal Pro</p>
+        <p class="text-blue-300 text-xs">v2.0</p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="ml-64 p-8">
+
+    <!-- Enhanced Header -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-4xl font-bold text-gray-900 mb-2">Quiz Reminders</h1>
+        <div class="flex items-center space-x-4 text-sm text-gray-600">
+          <span class="flex items-center space-x-1">
+            <i class="fas fa-calendar-day text-blue-500"></i>
+            <span id="currentDate">{{ current_date }}</span>
+          </span>
+          <span class="flex items-center space-x-1">
+            <i class="fas fa-clock text-green-500"></i>
+            <span id="currentTime">{{ current_time }}</span>
+          </span>
+          <span class="flex items-center space-x-1">
+            <i class="fas fa-bell text-purple-500"></i>
+            <span>Reminder Management</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Profile Dropdown -->
+      <div class="flex space-x-4">
+        <a href="{% url 'admin_create_quiz' %}" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all">
+          <i class="fas fa-plus mr-2"></i>Create Quiz
+        </a>
+        <div class="relative">
+          <button onclick="toggleProfileDropdown()" class="flex items-center space-x-3 bg-white px-4 py-2 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-all">
+            <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+              {{ user.username|first|upper }}
+            </div>
+            <div class="text-left">
+              <p class="font-semibold text-gray-900">{{ user.username }}</p>
+              <p class="text-xs text-gray-500">Administrator</p>
+            </div>
+            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+          </button>
+          <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-2xl z-50">
+            <div class="p-4 border-b">
+              <p class="font-semibold text-gray-900">{{ user.username }}</p>
+              <p class="text-sm text-gray-500">{{ user.email }}</p>
+            </div>
+            <div class="p-2">
+              <a href="{% url 'admin_profile_settings' %}" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700">
+                <i class="fas fa-user-cog text-blue-500 w-5"></i>
+                <span>Profile Settings</span>
+              </a>
+            </div>
+            <div class="p-2 border-t">
+              <form method="post" action="{% url 'admin_logout' %}" class="w-full">{% csrf_token %}
+                <button type="submit" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-red-50 text-red-600 w-full text-left">
+                  <i class="fas fa-sign-out-alt w-5"></i>
+                  <span>Logout</span>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Messages Section -->
+    {% if messages %}
+    <div class="mb-6">
+      {% for message in messages %}
+      <div class="{% if message.tags == 'success' %}bg-green-50 border border-green-200 text-green-700{% else %}bg-red-50 border border-red-200 text-red-700{% endif %} rounded-lg p-4 mb-2">
+        <div class="flex items-center">
+          <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} mr-2"></i>
+          <span>{{ message }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <!-- Pending Reminders -->
+      <div class="glass-card p-6 rounded-2xl hover-lift group">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-500 font-medium mb-1">Pending Reminders</p>
+            <p class="text-3xl font-bold text-gray-900 mb-2">{{ pending_reminders }}</p>
+            <div class="flex items-center text-sm text-orange-600">
+              <i class="fas fa-clock mr-1"></i>
+              <span>Require attention</span>
+            </div>
+          </div>
+          <div class="bg-orange-100 p-4 rounded-2xl group-hover:bg-orange-200 transition-colors">
+            <i class="fas fa-bell text-orange-600 text-2xl"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sent Today -->
+      <div class="glass-card p-6 rounded-2xl hover-lift group">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-500 font-medium mb-1">Sent Today</p>
+            <p class="text-3xl font-bold text-gray-900 mb-2">{{ sent_today }}</p>
+            <div class="flex items-center text-sm text-green-600">
+              <i class="fas fa-paper-plane mr-1"></i>
+              <span>Reminders sent</span>
+            </div>
+          </div>
+          <div class="bg-green-100 p-4 rounded-2xl group-hover:bg-green-200 transition-colors">
+            <i class="fas fa-paper-plane text-green-600 text-2xl"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total Notified -->
+      <div class="glass-card p-6 rounded-2xl hover-lift group">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-500 font-medium mb-1">Total Notified</p>
+            <p class="text-3xl font-bold text-gray-900 mb-2">{{ students_notified }}</p>
+            <div class="flex items-center text-sm text-blue-600">
+              <i class="fas fa-users mr-1"></i>
+              <span>Students reached</span>
+            </div>
+          </div>
+          <div class="bg-blue-100 p-4 rounded-2xl group-hover:bg-blue-200 transition-colors">
+            <i class="fas fa-users text-blue-600 text-2xl"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Quizzes -->
+      <div class="glass-card p-6 rounded-2xl hover-lift group">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-500 font-medium mb-1">Active Quizzes</p>
+            <p class="text-3xl font-bold text-gray-900 mb-2">{{ quizzes.count }}</p>
+            <div class="flex items-center text-sm text-purple-600">
+              <i class="fas fa-question-circle mr-1"></i>
+              <span>Available for reminders</span>
+            </div>
+          </div>
+          <div class="bg-purple-100 p-4 rounded-2xl group-hover:bg-purple-200 transition-colors">
+            <i class="fas fa-question-circle text-purple-600 text-2xl"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Send Reminders Form -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+      <!-- Send Reminders Card -->
+      <div class="glass-card rounded-2xl p-6 shadow lg:col-span-2">
+        <div class="flex justify-between items-center mb-6">
+          <div>
+            <h2 class="text-xl font-bold text-gray-900">Send Quiz Reminders</h2>
+            <p class="text-gray-500 text-sm">Send personalized reminders to students</p>
+          </div>
+          <div class="bg-blue-100 text-blue-700 px-3 py-2 rounded-lg">
+            <p class="text-xs font-medium">AI Powered</p>
+            <p class="text-sm font-bold">Smart Reminders</p>
+          </div>
+        </div>
+
+        <form method="post" id="reminderForm">
+          {% csrf_token %}
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+              <label for="quiz" class="block text-sm font-medium text-gray-700 mb-2">Select Quiz</label>
+              <select class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                      id="quiz" name="quiz" required>
+                <option value="">Choose a quiz...</option>
+                {% for quiz in quizzes %}
+                  <option value="{{ quiz.id }}" {% if selected_quiz == quiz.id|stringformat:"i" %}selected{% endif %}>
+                    {{ quiz.title }} - {{ quiz.course.course_name }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            
+            <div>
+              <label for="reminder_type" class="block text-sm font-medium text-gray-700 mb-2">Reminder Type</label>
+              <select class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                      id="reminder_type" name="reminder_type">
+                <option value="pending">Pending Attempts Only</option>
+                <option value="all">All Enrolled Students</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="mb-6">
+            <label for="message" class="block text-sm font-medium text-gray-700 mb-2">Custom Message (Optional)</label>
+            <textarea class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                      id="message" name="message" rows="3" 
+                      placeholder="Add a custom message for the reminder..."></textarea>
+          </div>
+          
+          <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+            <div class="flex items-start space-x-3">
+              <i class="fas fa-info-circle text-blue-500 text-lg mt-0.5"></i>
+              <div>
+                <p class="text-blue-800 font-medium">AI-Powered Personalization</p>
+                <p class="text-blue-600 text-sm mt-1">
+                  Reminders will be automatically personalized with student progress data and motivational messages.
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-all flex items-center justify-center">
+            <i class="fas fa-paper-plane mr-3"></i>
+            Send Smart Reminders
+          </button>
+        </form>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="space-y-6">
+        <!-- Quick Actions -->
+        <div class="glass-card rounded-2xl p-6 shadow">
+          <h2 class="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
+          <div class="space-y-3">
+            <a href="{% url 'admin_create_quiz' %}" class="flex items-center space-x-3 p-3 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors group">
+              <i class="fas fa-plus-circle text-blue-600 text-xl"></i>
+              <div>
+                <p class="font-semibold text-blue-900">Create Quiz</p>
+                <p class="text-xs text-blue-600">New assessment</p>
+              </div>
+            </a>
+            
+            <a href="{% url 'admin_quizzes' %}" class="flex items-center space-x-3 p-3 bg-green-50 rounded-xl hover:bg-green-100 transition-colors group">
+              <i class="fas fa-question-circle text-green-600 text-xl"></i>
+              <div>
+                <p class="font-semibold text-green-900">Manage Quizzes</p>
+                <p class="text-xs text-green-600">View all quizzes</p>
+              </div>
+            </a>
+            
+            <a href="{% url 'admin_quiz_results' %}" class="flex items-center space-x-3 p-3 bg-purple-50 rounded-xl hover:bg-purple-100 transition-colors group">
+              <i class="fas fa-chart-bar text-purple-600 text-xl"></i>
+              <div>
+                <p class="font-semibold text-purple-900">Quiz Results</p>
+                <p class="text-xs text-purple-600">View analytics</p>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="glass-card rounded-2xl p-6 shadow">
+          <h2 class="text-xl font-bold text-gray-900 mb-4">Reminder Status</h2>
+          <div class="space-y-4">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-700">Email Service</span>
+              <span class="flex items-center text-green-600">
+                <i class="fas fa-circle text-xs mr-2"></i>
+                Operational
+              </span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-700">AI Service</span>
+              <span class="flex items-center text-green-600">
+                <i class="fas fa-circle text-xs mr-2"></i>
+                Running
+              </span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-700">Last Batch</span>
+              <span class="flex items-center text-gray-600 text-sm">
+                {{ sent_today }} today
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Quizzes & Recent Reminders -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Active Quizzes -->
+      <div class="glass-card rounded-2xl p-6 shadow">
+        <div class="flex justify-between items-center mb-6">
+          <div>
+            <h2 class="text-xl font-bold text-gray-900">Active Quizzes</h2>
+            <p class="text-gray-500 text-sm">Available for reminder sending</p>
+          </div>
+          <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+            {{ quizzes.count }} Active
+          </span>
+        </div>
+
+        <div class="space-y-4 max-h-96 overflow-y-auto">
+          {% for quiz in quizzes %}
+          <div class="border border-gray-200 rounded-xl p-4 hover:border-blue-300 transition-colors">
+            <div class="flex justify-between items-start mb-2">
+              <h3 class="font-semibold text-gray-900">{{ quiz.title }}</h3>
+              <span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
+                {{ quiz.course.course_name }}
+              </span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-sm text-gray-600 mb-3">
+              <div class="flex items-center space-x-1">
+                <i class="fas fa-clock text-blue-500"></i>
+                <span>{{ quiz.time_limit }} mins</span>
+              </div>
+              <div class="flex items-center space-x-1">
+                <i class="fas fa-target text-green-500"></i>
+                <span>{{ quiz.passing_score }}% to pass</span>
+              </div>
+            </div>
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-gray-500">Due: {{ quiz.due_date|date:"M d, Y H:i" }}</span>
+              <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                {{ quiz.attempts.count }} attempts
+              </span>
+            </div>
+          </div>
+          {% empty %}
+          <div class="text-center py-8 text-gray-500">
+            <i class="fas fa-inbox text-3xl mb-3"></i>
+            <p>No active quizzes found</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Recent Reminders -->
+      <div class="glass-card rounded-2xl p-6 shadow">
+        <div class="flex justify-between items-center mb-6">
+          <div>
+            <h2 class="text-xl font-bold text-gray-900">Recent Reminders</h2>
+            <p class="text-gray-500 text-sm">Recently sent notifications</p>
+          </div>
+          <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium">
+            {{ recent_reminders|length }} Sent
+          </span>
+        </div>
+
+        <div class="space-y-4 max-h-96 overflow-y-auto">
+          {% for reminder in recent_reminders %}
+          <div class="border border-gray-200 rounded-xl p-4">
+            <div class="flex justify-between items-start mb-2">
+              <h3 class="font-semibold text-gray-900 text-sm">{{ reminder.quiz.title }}</h3>
+              <span class="status-badge status-sent">
+                {{ reminder.reminder_type|title }}
+              </span>
+            </div>
+            <div class="flex justify-between items-center text-sm text-gray-600">
+              <span>{{ reminder.students_count }} students</span>
+              <span class="text-xs text-gray-500">{{ reminder.sent_at|timesince }} ago</span>
+            </div>
+          </div>
+          {% empty %}
+          <div class="text-center py-8 text-gray-500">
+            <i class="fas fa-bell-slash text-3xl mb-3"></i>
+            <p>No reminders sent yet</p>
+            <p class="text-sm mt-1">Send your first reminder to see history here</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+function toggleProfileDropdown() {
+  const dropdown = document.getElementById("profileDropdown");
+  dropdown.classList.toggle("hidden");
+}
+
+// Close dropdown when clicking outside
+document.addEventListener("click", function(event) {
+  const dropdown = document.getElementById("profileDropdown");
+  const button = document.querySelector('[onclick="toggleProfileDropdown()"]');
+  if (dropdown && button && !dropdown.contains(event.target) && !button.contains(event.target)) {
+    dropdown.classList.add("hidden");
+  }
+});
+
+// Update current time
+function updateDateTime() {
+  const now = new Date();
+  document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', { 
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+  });
+  document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', {
+    hour: '2-digit', minute: '2-digit'
+  });
+}
+
+setInterval(updateDateTime, 1000);
+updateDateTime();
+
+// Form handling
+document.addEventListener('DOMContentLoaded', function() {
+  const quizSelect = document.getElementById('quiz');
+  const reminderForm = document.getElementById('reminderForm');
+  
+  // Update URL when quiz is selected
+  quizSelect.addEventListener('change', function() {
+    const selectedQuiz = this.value;
+    if (selectedQuiz) {
+      const url = new URL(window.location);
+      url.searchParams.set('quiz_id', selectedQuiz);
+      window.history.replaceState({}, '', url);
+    }
+  });
+  
+  // Form submission confirmation
+  reminderForm.addEventListener('submit', function(e) {
+    const quizValue = document.getElementById('quiz').value;
+    if (!quizValue) {
+      e.preventDefault();
+      showNotification('Please select a quiz first.', 'error');
+      return;
+    }
+    
+    if (!confirm('Are you sure you want to send quiz reminders? This will notify multiple students.')) {
+      e.preventDefault();
+    } else {
+      // Show loading state
+      const submitBtn = reminderForm.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+      submitBtn.disabled = true;
+      
+      // Re-enable button after 5 seconds if still on page (form submission failed)
+      setTimeout(() => {
+        if (submitBtn.disabled) {
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
+          showNotification('Submission taking longer than expected. Please check your connection.', 'warning');
+        }
+      }, 5000);
+    }
+  });
+});
+
+// Notification function
+function showNotification(message, type = 'info') {
+  const notification = document.createElement('div');
+  notification.className = `fixed top-4 right-4 z-50 p-4 rounded-xl shadow-lg border transform transition-all duration-300 ${
+    type === 'error' ? 'bg-red-50 border-red-200 text-red-700' :
+    type === 'success' ? 'bg-green-50 border-green-200 text-green-700' :
+    'bg-blue-50 border-blue-200 text-blue-700'
+  }`;
+  
+  notification.innerHTML = `
+    <div class="flex items-center space-x-3">
+      <i class="fas ${
+        type === 'error' ? 'fa-exclamation-circle' :
+        type === 'success' ? 'fa-check-circle' :
+        'fa-info-circle'
+      }"></i>
+      <span>${message}</span>
+    </div>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    notification.style.transform = 'translateX(100%)';
+    setTimeout(() => {
+      document.body.removeChild(notification);
+    }, 300);
+  }, 5000);
+}
+
+// Auto-refresh recent reminders every 30 seconds
+setInterval(() => {
+  // This would typically make an AJAX call to refresh the recent reminders
+  // For now, we'll just show a subtle indicator
+  const recentHeader = document.querySelector('h2:contains("Recent Reminders")');
+  if (recentHeader) {
+    const refreshIcon = document.createElement('i');
+    refreshIcon.className = 'fas fa-sync-alt text-blue-500 ml-2 animate-spin';
+    recentHeader.appendChild(refreshIcon);
+    
+    setTimeout(() => {
+      if (refreshIcon.parentNode) {
+        refreshIcon.parentNode.removeChild(refreshIcon);
+      }
+    }, 1000);
+  }
+}, 30000);
+</script>
+</body>
+</html>

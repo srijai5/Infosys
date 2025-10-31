@@ -1,0 +1,1237 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Students | StudyPortal Admin</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .sidebar-gradient {
+            background: linear-gradient(180deg, #4361ee 0%, #3a0ca3 100%);
+        }
+        
+        .stat-card {
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .progress-bar {
+            transition: width 1s ease-in-out;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        /* Toast Notification Styles */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 20px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            z-index: 10000;
+            transform: translateX(400px);
+            opacity: 0;
+            transition: all 0.3s ease-in-out;
+            max-width: 400px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-left: 4px solid #047857;
+        }
+
+        .toast.error {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            border-left: 4px solid #b91c1c;
+        }
+
+        .toast.warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border-left: 4px solid #b45309;
+        }
+
+        .toast.info {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border-left: 4px solid #1d4ed8;
+        }
+
+        .toast-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toast-close:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
+    <!-- Navigation -->
+    <!-- Enhanced Sidebar -->
+<aside class="sidebar-gradient text-white w-64 fixed h-screen overflow-y-auto shadow-xl">
+  <div class="p-6 border-b border-blue-400/30">
+    <div class="flex items-center space-x-3">
+      <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
+        <i class="fas fa-graduation-cap text-blue-600 text-2xl"></i>
+      </div>
+      <div>
+        <h2 class="text-xl font-bold">StudyPortal</h2>
+        <p class="text-blue-200 text-xs">Admin Dashboard</p>
+      </div>
+    </div>
+  </div>
+  
+  <nav class="flex-1 p-4 space-y-2">
+    <a href="{% url 'admin_dashboard' %}" class="flex items-center space-x-3 p-3 text-blue-100 hover:bg-white/10 rounded-xl transition-all">
+      <i class="fas fa-chart-line w-5 text-center"></i>
+      <span>Dashboard</span>
+    </a>
+    <a href="{% url 'admin_students' %}" class="flex items-center space-x-3 p-3 bg-white/20 rounded-xl text-white font-medium">
+      <i class="fas fa-users w-5 text-center"></i>
+      <span>Students</span>
+    </a>
+    <a href="{% url 'admin_courses' %}" class="flex items-center space-x-3 p-3 text-blue-100 hover:bg-white/10 rounded-xl transition-all">
+      <i class="fas fa-book w-5 text-center"></i>
+      <span>Courses</span>
+    </a>
+    <a href="{% url 'assign_courses' %}" class="flex items-center space-x-3 p-3 text-blue-100 hover:bg-white/10 rounded-xl transition-all">
+      <i class="fas fa-tasks w-5 text-center"></i>
+      <span>Assign Courses</span>
+    </a>
+    
+    <!-- Quiz Management Section -->
+    <a href="{% url 'admin_quizzes' %}" class="flex items-center space-x-3 p-3 text-blue-100 hover:bg-white/10 rounded-xl transition-all">
+      <i class="fas fa-question-circle w-5 text-center"></i>
+      <span>Quiz Management</span>
+    </a>
+    
+    <a href="{% url 'admin_quiz_results' %}" class="flex items-center space-x-3 p-3 text-blue-100 hover:bg-white/10 rounded-xl transition-all">
+      <i class="fas fa-chart-bar w-5 text-center"></i>
+      <span>Quiz Results</span>
+    </a>
+    
+    <!-- Other Sections -->
+    
+    <a href="{% url 'student_study_tracks' %}" class="flex items-center space-x-3 p-3 text-blue-100 hover:bg-white/10 rounded-xl transition-all">
+      <i class="fas fa-list-alt w-5 text-center"></i>
+      <span>Study Tracks</span>
+    </a>
+    <a href="{% url 'admin_analytics' %}" class="flex items-center space-x-3 p-3 text-blue-100 hover:bg-white/10 rounded-xl transition-all">
+      <i class="fas fa-chart-bar w-5 text-center"></i>
+      <span>Analytics</span>
+    </a>
+  </nav>
+  
+  <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-blue-400/30">
+    <div class="bg-white/10 rounded-lg p-3 text-center">
+      <p class="text-blue-200 text-sm">StudyPortal Pro</p>
+      <p class="text-blue-300 text-xs">v2.0</p>
+    </div>
+  </div>
+</aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 p-8">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Student Management</h1>
+                <p class="text-gray-600">Manage all registered students and their progress</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2 text-sm text-gray-600">
+                    <i class="fas fa-calendar-day text-blue-500"></i>
+                    <span id="currentDate">Loading...</span>
+                </div>
+                <div class="flex items-center space-x-2 text-sm text-gray-600">
+                    <i class="fas fa-clock text-green-500"></i>
+                    <span id="currentTime">Loading...</span>
+                </div>
+                <div class="relative">
+                    <button onclick="toggleProfileDropdown()" class="flex items-center space-x-3 bg-white px-4 py-2 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-all">
+                        <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                            {{ user.username|first|upper }}
+                        </div>
+                        <div class="text-left">
+                            <p class="font-semibold text-gray-900">{{ user.username }}</p>
+                            <p class="text-xs text-gray-500">Administrator</p>
+                        </div>
+                        <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                    </button>
+                    <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-2xl z-50">
+                        <div class="p-4 border-b">
+                            <p class="font-semibold text-gray-900">{{ user.username }}</p>
+                            <p class="text-sm text-gray-500">{{ user.email }}</p>
+                        </div>
+                        <div class="p-2">
+                            <a href="{% url 'admin_profile_settings' %}" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700">
+                                <i class="fas fa-user-cog text-blue-500 w-5"></i>
+                                <span>Profile Settings</span>
+                            </a>
+                        </div>
+                        <div class="p-2 border-t">
+                            <form method="post" action="{% url 'admin_logout' %}" class="w-full">
+                                {% csrf_token %}
+                                <button type="submit" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-red-50 text-red-600 w-full text-left">
+                                    <i class="fas fa-sign-out-alt w-5"></i>
+                                    <span>Logout</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+        <div class="mb-6 space-y-2">
+            {% for message in messages %}
+            <div class="{% if message.tags == 'success' %}bg-green-50 border border-green-200 text-green-700{% else %}bg-red-50 border border-red-200 text-red-700{% endif %} rounded-lg p-4 flex items-center">
+                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} mr-2"></i>
+                <span>{{ message }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="stat-card glass-card rounded-2xl p-6 fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 font-medium">Total Students</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ students_with_progress|length }}</p>
+                        <div class="flex items-center mt-2 text-sm text-blue-600">
+                            <i class="fas fa-users mr-1"></i>
+                            <span>All registered users</span>
+                        </div>
+                    </div>
+                    <div class="bg-blue-100 p-4 rounded-2xl">
+                        <i class="fas fa-users text-blue-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stat-card glass-card rounded-2xl p-6 fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 font-medium">Active Learners</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ students_with_progress|length }}</p>
+                        <div class="flex items-center mt-2 text-sm text-green-600">
+                            <i class="fas fa-user-check mr-1"></i>
+                            <span>Currently learning</span>
+                        </div>
+                    </div>
+                    <div class="bg-green-100 p-4 rounded-2xl">
+                        <i class="fas fa-user-check text-green-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stat-card glass-card rounded-2xl p-6 fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 font-medium">Avg. Progress</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2" id="avgProgress">
+                            {% if students_with_progress %}
+                                {% with total_progress=0 %}
+                                    {% for data in students_with_progress %}
+                                        {% widthratio data.study_progress 1 1 as progress %}
+                                        {{ progress|add:total_progress }}
+                                    {% endfor %}
+                                    {% widthratio total_progress students_with_progress|length 1 %}%
+                                {% endwith %}
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </p>
+                        <div class="flex items-center mt-2 text-sm text-purple-600">
+                            <i class="fas fa-chart-line mr-1"></i>
+                            <span>Average completion</span>
+                        </div>
+                    </div>
+                    <div class="bg-purple-100 p-4 rounded-2xl">
+                        <i class="fas fa-chart-line text-purple-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stat-card glass-card rounded-2xl p-6 fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 font-medium">New This Week</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2" id="newThisWeek">0</p>
+                        <div class="flex items-center mt-2 text-sm text-orange-600">
+                            <i class="fas fa-user-plus mr-1"></i>
+                            <span>Recent signups</span>
+                        </div>
+                    </div>
+                    <div class="bg-orange-100 p-4 rounded-2xl">
+                        <i class="fas fa-user-plus text-orange-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Students Table -->
+        <div class="glass-card rounded-2xl p-6 mb-8">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900">All Students</h2>
+                    <p class="text-gray-500 text-sm">Manage student accounts and track their progress</p>
+                </div>
+                <button onclick="openAddStudentModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-plus mr-2"></i>Add Student
+                </button>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Student</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Email</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Joined Date</th>
+                            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Study Progress</th>
+                            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for data in students_with_progress %}
+                        <tr class="hover:bg-gray-50 transition-colors" id="student-row-{{ data.student.id }}">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm mr-3">
+                                        {{ data.student.username|first|upper }}
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-gray-900">
+                                            {% if data.student.first_name or data.student.last_name %}
+                                                {{ data.student.first_name }} {{ data.student.last_name }}
+                                            {% else %}
+                                                {{ data.student.username }}
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-sm text-gray-500">ID: {{ data.student.id }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ data.student.email }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ data.student.date_joined|date:"M d, Y" }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center justify-center space-x-2">
+                                    <div class="w-32 bg-gray-200 rounded-full h-2.5">
+                                        <div class="bg-blue-600 h-2.5 rounded-full progress-bar transition-all duration-500" 
+                                             style="width: {{ data.study_progress }}%"></div>
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-700 w-12">{{ data.study_progress }}%</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                <div class="flex items-center justify-center space-x-2">
+                                    <button onclick="viewStudentDetails({{ data.student.id }})" class="text-blue-600 hover:text-blue-900 px-2 py-1 rounded hover:bg-blue-50 transition-colors">
+                                        <i class="fas fa-eye mr-1"></i>View
+                                    </button>
+                                    <button onclick="openEditStudentModal({{ data.student.id }})" class="text-green-600 hover:text-green-900 px-2 py-1 rounded hover:bg-green-50 transition-colors">
+                                        <i class="fas fa-edit mr-1"></i>Edit
+                                    </button>
+                                    <button onclick="openDeleteStudentModal({{ data.student.id }}, '{{ data.student.username }}')" class="text-red-600 hover:text-red-900 px-2 py-1 rounded hover:bg-red-50 transition-colors">
+                                        <i class="fas fa-trash mr-1"></i>Delete
+                                    </button>
+                                    <a href="{% url 'assign_courses' %}?student={{ data.student.id }}" class="text-purple-600 hover:text-purple-900 px-2 py-1 rounded hover:bg-purple-50 transition-colors">
+                                        <i class="fas fa-tasks mr-1"></i>Assign
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                                <i class="fas fa-users text-4xl mb-3 opacity-50"></i>
+                                <p>No students found</p>
+                                <p class="text-sm mt-1">Students will appear here once they register</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Student Modal -->
+    <div id="addStudentModal" class="modal">
+        <div class="modal-content">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-gray-900">Add New Student</h3>
+                    <button onclick="closeAddStudentModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <form id="addStudentForm">
+                {% csrf_token %}
+                <div class="p-6 space-y-4">
+                    <!-- First Name Field -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                        <input type="text" name="first_name" id="addFirstName" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Enter first name">
+                    </div>
+                    
+                    <!-- Last Name Field -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                        <input type="text" name="last_name" id="addLastName" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Enter last name">
+                    </div>
+                    
+                    <!-- Username Field -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                        <input type="text" name="username" id="addUsername" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Enter username">
+                    </div>
+                    
+                    <!-- Email Field -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" name="email" id="addEmail" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Enter email address">
+                    </div>
+                    
+                    <!-- Password Field -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" name="password" id="addPassword" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Enter password (min. 8 characters)">
+                    </div>
+                    
+                    <!-- Confirm Password Field -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                        <input type="password" name="confirm_password" id="addConfirmPassword" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Confirm password">
+                    </div>
+                </div>
+                <div class="p-6 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeAddStudentModal()" 
+                                class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" id="addStudentSubmit" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                            <i class="fas fa-spinner fa-spin hidden mr-2"></i>
+                            <span>Add Student</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Student Modal -->
+    <div id="editStudentModal" class="modal">
+        <div class="modal-content">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-gray-900">Edit Student</h3>
+                    <button onclick="closeEditStudentModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <form id="editStudentForm">
+                {% csrf_token %}
+                <input type="hidden" name="student_id" id="editStudentId">
+                <div class="p-6 space-y-4">
+                    <!-- First Name Field -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                        <input type="text" name="first_name" id="editFirstName" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Enter first name">
+                    </div>
+                    
+                    <!-- Last Name Field -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                        <input type="text" name="last_name" id="editLastName" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Enter last name">
+                    </div>
+                    
+                    <!-- Username Field -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                        <input type="text" name="username" id="editUsername" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Enter username">
+                    </div>
+                    
+                    <!-- Email Field -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" name="email" id="editEmail" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Enter email address">
+                    </div>
+                    
+                    <!-- Password Field (Optional) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">New Password (Optional)</label>
+                        <input type="password" name="password" id="editPassword" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Leave blank to keep current password">
+                        <p class="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
+                    </div>
+                </div>
+                <div class="p-6 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeEditStudentModal()" 
+                                class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" id="editStudentSubmit" 
+                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                            <i class="fas fa-spinner fa-spin hidden mr-2"></i>
+                            <span>Update Student</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Student Confirmation Modal -->
+    <div id="deleteStudentModal" class="modal">
+        <div class="modal-content">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-gray-900">Delete Student</h3>
+                    <button onclick="closeDeleteStudentModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <form id="deleteStudentForm">
+                {% csrf_token %}
+                <input type="hidden" name="student_id" id="deleteStudentId">
+                <div class="p-6">
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle text-3xl text-red-500 mb-4"></i>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-2">Confirm Deletion</h4>
+                        <p class="text-gray-600 mb-4">Are you sure you want to delete student <span id="deleteStudentName" class="font-semibold"></span>?</p>
+                        <p class="text-sm text-red-600 mb-4">This action cannot be undone. All student data including course progress will be permanently deleted.</p>
+                    </div>
+                </div>
+                <div class="p-6 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeDeleteStudentModal()" 
+                                class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" id="deleteStudentSubmit"
+                                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center">
+                            <i class="fas fa-spinner fa-spin hidden mr-2"></i>
+                            <span>Delete Student</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Student Details Modal -->
+    <div id="studentDetailsModal" class="modal">
+        <div class="modal-content">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-gray-900">Student Details</h3>
+                    <button onclick="closeStudentDetailsModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div id="studentDetailsContent">
+                    <!-- Student details will be loaded here -->
+                </div>
+            </div>
+            <div class="p-6 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
+                <div class="flex justify-end">
+                    <button onclick="closeStudentDetailsModal()" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Toast Notification System
+    function showToast(message, type = 'info', duration = 5000) {
+        const toastContainer = document.getElementById('toastContainer');
+        const toastId = 'toast-' + Date.now();
+        
+        const icons = {
+            success: 'fa-check-circle',
+            error: 'fa-exclamation-circle',
+            warning: 'fa-exclamation-triangle',
+            info: 'fa-info-circle'
+        };
+        
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.id = toastId;
+        toast.innerHTML = `
+            <i class="toast-icon fas ${icons[type]}"></i>
+            <div class="toast-content">${message}</div>
+            <button class="toast-close" onclick="removeToast('${toastId}')">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
+        toastContainer.appendChild(toast);
+        
+        // Show toast with animation
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 100);
+        
+        // Auto remove after duration
+        if (duration > 0) {
+            setTimeout(() => {
+                removeToast(toastId);
+            }, duration);
+        }
+        
+        return toastId;
+    }
+    
+    function removeToast(toastId) {
+        const toast = document.getElementById(toastId);
+        if (toast) {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        }
+    }
+    
+    // Utility functions
+    function toggleProfileDropdown() {
+        const dropdown = document.getElementById("profileDropdown");
+        dropdown.classList.toggle("hidden");
+    }
+    
+    function updateDateTime() {
+        const now = new Date();
+        document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', { 
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+        });
+        document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', {
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+    }
+    
+    // Get CSRF token function
+    function getCSRFToken() {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        return csrfToken ? csrfToken.value : '';
+    }
+    
+    // Loading state management
+    function setLoading(button, isLoading) {
+        const spinner = button.querySelector('.fa-spinner');
+        const text = button.querySelector('span');
+        
+        if (isLoading) {
+            spinner.classList.remove('hidden');
+            button.disabled = true;
+        } else {
+            spinner.classList.add('hidden');
+            button.disabled = false;
+        }
+    }
+    
+    // Modal functions
+    function openAddStudentModal() {
+        document.getElementById('addStudentModal').style.display = 'flex';
+        document.getElementById('addStudentForm').reset();
+    }
+    
+    function closeAddStudentModal() {
+        document.getElementById('addStudentModal').style.display = 'none';
+    }
+    
+    async function openEditStudentModal(studentId) {
+        try {
+            console.log('Fetching student data for ID:', studentId);
+            
+            // Fetch student data from API endpoint
+            const response = await fetch(`/admin/student/${studentId}/`);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Server returned ${response.status}: ${errorText}`);
+            }
+            
+            const studentData = await response.json();
+            console.log('Student data received:', studentData);
+            
+            // Check if we got an error from the server
+            if (studentData.error) {
+                throw new Error(studentData.error);
+            }
+            
+            // Populate form fields
+            document.getElementById('editStudentId').value = studentData.id;
+            document.getElementById('editFirstName').value = studentData.first_name || '';
+            document.getElementById('editLastName').value = studentData.last_name || '';
+            document.getElementById('editUsername').value = studentData.username;
+            document.getElementById('editEmail').value = studentData.email;
+            document.getElementById('editPassword').value = '';
+            
+            // Show modal
+            document.getElementById('editStudentModal').style.display = 'flex';
+            
+        } catch (error) {
+            console.error('Error loading student data:', error);
+            showToast('Error loading student data: ' + error.message, 'error');
+        }
+    }
+    
+    function closeEditStudentModal() {
+        document.getElementById('editStudentModal').style.display = 'none';
+    }
+    
+    function openDeleteStudentModal(studentId, studentName) {
+        console.log('Opening delete modal for student:', studentId, studentName);
+        
+        document.getElementById('deleteStudentId').value = studentId;
+        document.getElementById('deleteStudentName').textContent = studentName;
+        
+        document.getElementById('deleteStudentModal').style.display = 'flex';
+    }
+    
+    function closeDeleteStudentModal() {
+        document.getElementById('deleteStudentModal').style.display = 'none';
+    }
+    
+    async function viewStudentDetails(studentId) {
+        // Show loading state
+        document.getElementById('studentDetailsContent').innerHTML = `
+            <div class="flex justify-center items-center py-8">
+                <i class="fas fa-spinner fa-spin text-2xl text-blue-600 mr-3"></i>
+                <span>Loading student details...</span>
+            </div>
+        `;
+        
+        // Show modal
+        document.getElementById('studentDetailsModal').style.display = 'flex';
+        
+        try {
+            console.log('Fetching student details for ID:', studentId);
+            
+            // Fetch real student data from the server
+            const response = await fetch(`/admin/student/${studentId}/`);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Server returned ${response.status}: ${errorText}`);
+            }
+            
+            const studentData = await response.json();
+            console.log('Student details received:', studentData);
+            
+            // Check if we got an error from the server
+            if (studentData.error) {
+                throw new Error(studentData.error);
+            }
+            
+            // Display real student data
+            displayStudentDetails(studentData);
+            
+        } catch (error) {
+            console.error('Error fetching student details:', error);
+            document.getElementById('studentDetailsContent').innerHTML = `
+                <div class="text-center py-8 text-red-600">
+                    <i class="fas fa-exclamation-triangle text-3xl mb-3"></i>
+                    <p>Error loading student details</p>
+                    <p class="text-sm mt-1">${error.message}</p>
+                    <button onclick="viewStudentDetails(${studentId})" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Try Again
+                    </button>
+                </div>
+            `;
+        }
+    }
+    
+    function displayStudentDetails(studentData) {
+        const enrolledCourses = studentData.enrolled_courses || [];
+        
+        document.getElementById('studentDetailsContent').innerHTML = `
+            <div class="space-y-6">
+                <div class="flex items-center space-x-4">
+                    <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                        ${studentData.first_name ? studentData.first_name.charAt(0).toUpperCase() : studentData.username.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900">
+                            ${studentData.full_name || studentData.username}
+                        </h4>
+                        <p class="text-gray-600">${studentData.email}</p>
+                        <p class="text-sm text-gray-500">Username: ${studentData.username}</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Student ID</p>
+                        <p class="text-lg font-semibold text-gray-900">${studentData.id}</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Joined Date</p>
+                        <p class="text-lg font-semibold text-gray-900">${studentData.date_joined}</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Enrolled Courses</p>
+                        <p class="text-lg font-semibold text-gray-900">${studentData.enrolled_courses_count || 0}</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Completed Courses</p>
+                        <p class="text-lg font-semibold text-gray-900">${studentData.completed_courses_count || 0}</p>
+                    </div>
+                </div>
+    
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Overall Progress</p>
+                        <p class="text-lg font-semibold text-gray-900">${studentData.overall_progress || 0}%</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Total Study Time</p>
+                        <p class="text-lg font-semibold text-gray-900">${studentData.total_study_time_hours || 0} hours</p>
+                    </div>
+                </div>
+                
+                ${enrolledCourses.length > 0 ? `
+                    <div>
+                        <p class="text-sm font-medium text-gray-700 mb-3">Enrolled Courses (${enrolledCourses.length})</p>
+                        <div class="space-y-3 max-h-60 overflow-y-auto">
+                            ${enrolledCourses.map(course => `
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border">
+                                    <div class="flex-1">
+                                        <p class="font-medium text-gray-900">${course.course_name}</p>
+                                        <div class="flex items-center space-x-2 mt-1">
+                                            <p class="text-sm text-gray-500">Progress: ${course.progress || 0}%</p>
+                                            <span class="text-xs px-2 py-1 rounded-full ${course.completed ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}">
+                                                ${course.completed ? 'Completed' : 'In Progress'}
+                                            </span>
+                                        </div>
+                                        <p class="text-xs text-gray-400 mt-1">Videos: ${course.watched_videos || 0}/${course.total_videos || 0} watched</p>
+                                        ${course.enrolled_date ? `<p class="text-xs text-gray-400">Enrolled: ${course.enrolled_date}</p>` : ''}
+                                    </div>
+                                    <div class="w-20 bg-gray-200 rounded-full h-2 ml-4">
+                                        <div class="bg-green-600 h-2 rounded-full transition-all duration-500" style="width: ${course.progress || 0}%"></div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : `
+                    <div class="text-center py-4 border-2 border-dashed border-gray-300 rounded-lg">
+                        <i class="fas fa-book text-3xl text-gray-300 mb-2"></i>
+                        <p class="text-gray-500">No courses enrolled yet</p>
+                        <p class="text-sm text-gray-400 mt-1">Assign courses to this student to track their progress</p>
+                    </div>
+                `}
+                
+                <div>
+                    <p class="text-sm font-medium text-gray-700 mb-2">Account Information</p>
+                    <div class="bg-gray-50 p-4 rounded-lg border">
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-500">Last Login:</span>
+                                <p class="font-medium">${studentData.last_login || 'Never'}</p>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Account Status:</span>
+                                <p class="font-medium ${studentData.is_active ? 'text-green-600' : 'text-red-600'}">
+                                    ${studentData.is_active ? 'Active' : 'Inactive'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function closeStudentDetailsModal() {
+        document.getElementById('studentDetailsModal').style.display = 'none';
+    }
+    
+    // Add Student Form Handler
+    document.getElementById('addStudentForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const submitButton = document.getElementById('addStudentSubmit');
+        setLoading(submitButton, true);
+        
+        const formData = {
+            first_name: document.getElementById('addFirstName').value,
+            last_name: document.getElementById('addLastName').value,
+            username: document.getElementById('addUsername').value,
+            email: document.getElementById('addEmail').value,
+            password: document.getElementById('addPassword').value,
+            confirm_password: document.getElementById('addConfirmPassword').value
+        };
+        
+        // Client-side validation
+        if (formData.password !== formData.confirm_password) {
+            showToast('Passwords do not match!', 'error');
+            setLoading(submitButton, false);
+            return false;
+        }
+        
+        if (formData.password.length < 8) {
+            showToast('Password must be at least 8 characters long!', 'error');
+            setLoading(submitButton, false);
+            return false;
+        }
+        
+        try {
+            const response = await fetch('/admin/students/add/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showToast(data.message, 'success');
+                closeAddStudentModal();
+                // Refresh the page after a short delay to show the new student
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                showToast('Error: ' + data.error, 'error');
+            }
+        } catch (error) {
+            console.error('Error adding student:', error);
+            showToast('Error adding student: ' + error.message, 'error');
+        } finally {
+            setLoading(submitButton, false);
+        }
+    });
+    
+    // Edit Student Form Handler
+    document.getElementById('editStudentForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const submitButton = document.getElementById('editStudentSubmit');
+        setLoading(submitButton, true);
+        
+        const formData = {
+            student_id: document.getElementById('editStudentId').value,
+            first_name: document.getElementById('editFirstName').value,
+            last_name: document.getElementById('editLastName').value,
+            username: document.getElementById('editUsername').value,
+            email: document.getElementById('editEmail').value,
+            password: document.getElementById('editPassword').value
+        };
+        
+        // Client-side validation
+        if (formData.password && formData.password.length < 8) {
+            showToast('Password must be at least 8 characters long!', 'error');
+            setLoading(submitButton, false);
+            return false;
+        }
+        
+        try {
+            const response = await fetch('/admin/students/edit/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showToast(data.message, 'success');
+                closeEditStudentModal();
+                // Refresh the page after a short delay to show updated data
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                showToast('Error: ' + data.error, 'error');
+            }
+        } catch (error) {
+            console.error('Error editing student:', error);
+            showToast('Error editing student: ' + error.message, 'error');
+        } finally {
+            setLoading(submitButton, false);
+        }
+    });
+    
+    // Delete Student Handler
+    async function confirmDeleteStudent() {
+        const submitButton = document.getElementById('deleteStudentSubmit');
+        const studentId = document.getElementById('deleteStudentId').value;
+        const studentName = document.getElementById('deleteStudentName').textContent;
+        
+        console.log('Attempting to delete student:', { studentId, studentName });
+        setLoading(submitButton, true);
+        
+        try {
+            const csrfToken = getCSRFToken();
+            console.log('CSRF Token:', csrfToken ? 'Found' : 'Not found');
+            
+            const response = await fetch('/admin/students/delete/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    student_id: parseInt(studentId)
+                })
+            });
+            
+            console.log('Response status:', response.status);
+            const data = await response.json();
+            console.log('Delete response data:', data);
+            
+            if (data.success) {
+                showToast(data.message, 'success');
+                closeDeleteStudentModal();
+                
+                // Remove the student row from the table without page reload
+                const studentRow = document.getElementById(`student-row-${studentId}`);
+                if (studentRow) {
+                    // Add smooth animation
+                    studentRow.style.transition = 'all 0.3s ease';
+                    studentRow.style.opacity = '0';
+                    studentRow.style.transform = 'translateX(100px)';
+                    
+                    setTimeout(() => {
+                        studentRow.remove();
+                        
+                        // Update student count in all stat cards
+                        const remainingStudents = document.querySelectorAll('tbody tr[id^="student-row-"]').length;
+                        const statCards = document.querySelectorAll('.stat-card .text-3xl');
+                        if (statCards.length > 0) {
+                            statCards[0].textContent = remainingStudents; // Total Students
+                            statCards[1].textContent = remainingStudents; // Active Learners
+                        }
+                        
+                        // Show empty state if no students left
+                        if (remainingStudents === 0) {
+                            const tbody = document.querySelector('tbody');
+                            tbody.innerHTML = `
+                                <tr>
+                                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                                        <i class="fas fa-users text-4xl mb-3 opacity-50"></i>
+                                        <p>No students found</p>
+                                        <p class="text-sm mt-1">Students will appear here once they register</p>
+                                    </td>
+                                </tr>
+                            `;
+                        }
+                    }, 300);
+                } else {
+                    console.log('Student row not found, reloading page...');
+                    // Fallback: reload page if we can't find the row
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                }
+            } else {
+                showToast('Error: ' + data.error, 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting student:', error);
+            showToast('Error deleting student: ' + error.message, 'error');
+        } finally {
+            setLoading(submitButton, false);
+        }
+    }
+
+    // Delete Student Form Handler
+    document.getElementById('deleteStudentForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        await confirmDeleteStudent();
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener("click", function(event) {
+        const dropdown = document.getElementById("profileDropdown");
+        const button = document.querySelector('[onclick="toggleProfileDropdown()"]');
+        if (dropdown && button && !dropdown.contains(event.target) && !button.contains(event.target)) {
+            dropdown.classList.add("hidden");
+        }
+    });
+    
+    // Close modals when clicking outside
+    document.addEventListener("click", function(event) {
+        const modals = ['addStudentModal', 'editStudentModal', 'deleteStudentModal', 'studentDetailsModal'];
+        modals.forEach(modalId => {
+            const modal = document.getElementById(modalId);
+            if (modal && event.target === modal) {
+                if (modalId === 'addStudentModal') closeAddStudentModal();
+                if (modalId === 'editStudentModal') closeEditStudentModal();
+                if (modalId === 'deleteStudentModal') closeDeleteStudentModal();
+                if (modalId === 'studentDetailsModal') closeStudentDetailsModal();
+            }
+        });
+    });
+    
+    // Calculate average progress
+    function calculateAverageProgress() {
+        const progressElements = document.querySelectorAll('[class*="progress-bar"]');
+        let totalProgress = 0;
+        let count = 0;
+        
+        progressElements.forEach(element => {
+            const width = element.style.width;
+            if (width) {
+                const progress = parseInt(width);
+                if (!isNaN(progress)) {
+                    totalProgress += progress;
+                    count++;
+                }
+            }
+        });
+        
+        const avgProgress = count > 0 ? Math.round(totalProgress / count) : 0;
+        document.getElementById('avgProgress').textContent = avgProgress + '%';
+    }
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+        calculateAverageProgress();
+        
+        // Calculate new students this week (mock data)
+        document.getElementById('newThisWeek').textContent = Math.floor(Math.random() * 5);
+        
+        console.log('Admin Students page loaded successfully');
+    });
+    </script>
+</body>
+</html>

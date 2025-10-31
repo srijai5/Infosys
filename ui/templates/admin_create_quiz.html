@@ -1,0 +1,622 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% if action == 'Edit' %}Edit Quiz - {{ quiz.title }}{% else %}Create New Quiz{% endif %} | StudyPortal</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary: #4361ee;
+      --secondary: #3f37c9;
+      --success: #4cc9f0;
+      --warning: #f72585;
+      --light: #f8f9fa;
+      --dark: #212529;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #f5f7ff 0%, #f0f4ff 100%);
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .glass-card {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+    }
+    
+    .sidebar-gradient {
+      background: linear-gradient(180deg, #4361ee 0%, #3a0ca3 100%);
+    }
+    
+    .gradient-text {
+      background: linear-gradient(135deg, var(--primary), var(--success));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .hover-lift {
+      transition: all 0.3s ease;
+    }
+    
+    .hover-lift:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    }
+
+    .question-card {
+      transition: all 0.3s ease;
+    }
+
+    .question-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+
+<body class="text-gray-800 antialiased">
+<div class="flex min-h-screen">
+
+  <!-- Enhanced Sidebar -->
+  <aside class="sidebar-gradient text-white w-64 fixed h-screen overflow-y-auto shadow-xl">
+    <div class="p-6 border-b border-blue-400/30">
+      <div class="flex items-center space-x-3">
+        <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
+          <i class="fas fa-graduation-cap text-blue-600 text-2xl"></i>
+        </div>
+        <div>
+          <h2 class="text-xl font-bold">StudyPortal</h2>
+          <p class="text-blue-200 text-xs">Admin Dashboard</p>
+        </div>
+      </div>
+    </div>
+    
+    <nav class="flex-1 p-4 space-y-2">
+      <a href="{% url 'admin_dashboard' %}" class="flex items-center space-x-3 p-3 text-blue-100 hover:bg-white/10 rounded-xl transition-all">
+        <i class="fas fa-chart-line w-5 text-center"></i>
+        <span>Dashboard</span>
+      </a>
+      <a href="{% url 'admin_students' %}" class="flex items-center space-x-3 p-3 text-blue-100 hover:bg-white/10 rounded-xl transition-all">
+        <i class="fas fa-users w-5 text-center"></i>
+        <span>Students</span>
+      </a>
+      <a href="{% url 'admin_courses' %}" class="flex items-center space-x-3 p-3 text-blue-100 hover:bg-white/10 rounded-xl transition-all">
+        <i class="fas fa-book w-5 text-center"></i>
+        <span>Courses</span>
+      </a>
+      
+      <!-- MILESTONE 3 PROFESSIONAL FEATURES -->
+      <a href="{% url 'assign_courses' %}" class="flex items-center space-x-3 p-3 text-blue-100 hover:bg-white/10 rounded-xl transition-all">
+        <i class="fas fa-tasks w-5 text-center"></i>
+        <span>Assign Courses</span>
+      </a>
+      <a href="{% url 'admin_quizzes' %}" class="flex items-center space-x-3 p-3 bg-white/20 rounded-xl text-white font-medium">
+        <i class="fas fa-question-circle w-5 text-center"></i>
+        <span>Quiz Management</span>
+      </a>
+      <a href="{% url 'admin_quiz_results' %}" class="flex items-center space-x-3 p-3 text-blue-100 hover:bg-white/10 rounded-xl transition-all">
+        <i class="fas fa-chart-bar w-5 text-center"></i>
+        <span>Quiz Results</span>
+      </a>
+      <a href="{% url 'student_study_tracks' %}" class="flex items-center space-x-3 p-3 text-blue-100 hover:bg-white/10 rounded-xl transition-all">
+        <i class="fas fa-list-alt w-5 text-center"></i>
+        <span>Study Tracks</span>
+      </a>
+      
+      <a href="{% url 'admin_analytics' %}" class="flex items-center space-x-3 p-3 text-blue-100 hover:bg-white/10 rounded-xl transition-all">
+        <i class="fas fa-chart-bar w-5 text-center"></i>
+        <span>Analytics</span>
+      </a>
+    </nav>
+    
+    <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-blue-400/30">
+      <div class="bg-white/10 rounded-lg p-3 text-center">
+        <p class="text-blue-200 text-sm">StudyPortal Pro</p>
+        <p class="text-blue-300 text-xs">v2.0</p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="ml-64 flex-1 p-8 min-w-0 overflow-x-hidden">
+
+    <!-- Enhanced Header -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-4xl font-bold text-gray-900 mb-2">
+          {% if action == 'Edit' %}
+            Edit Quiz: {{ quiz.title }}
+          {% else %}
+            Create New Quiz
+          {% endif %}
+        </h1>
+        <div class="flex items-center space-x-4 text-sm text-gray-600">
+          <span class="flex items-center space-x-1">
+            <i class="fas fa-calendar-day text-blue-500"></i>
+            <span id="currentDate">{{ current_date }}</span>
+          </span>
+          <span class="flex items-center space-x-1">
+            <i class="fas fa-clock text-green-500"></i>
+            <span id="currentTime">{{ current_time }}</span>
+          </span>
+          <span class="flex items-center space-x-1">
+            <i class="fas fa-user-shield text-purple-500"></i>
+            <span>Administrator</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Profile Dropdown -->
+      <div class="flex space-x-4">
+        <a href="{% url 'admin_quizzes' %}" class="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-all">
+          <i class="fas fa-arrow-left mr-2"></i>Back to Quizzes
+        </a>
+        <div class="relative">
+          <button onclick="toggleProfileDropdown()" class="flex items-center space-x-3 bg-white px-4 py-2 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-all">
+            <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+              {{ user.username|first|upper }}
+            </div>
+            <div class="text-left">
+              <p class="font-semibold text-gray-900">{{ user.username }}</p>
+              <p class="text-xs text-gray-500">Administrator</p>
+            </div>
+            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+          </button>
+          <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-2xl z-50">
+            <div class="p-4 border-b">
+              <p class="font-semibold text-gray-900">{{ user.username }}</p>
+              <p class="text-sm text-gray-500">{{ user.email }}</p>
+            </div>
+            <div class="p-2">
+              <a href="{% url 'admin_profile_settings' %}" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700">
+                <i class="fas fa-user-cog text-blue-500 w-5"></i>
+                <span>Profile Settings</span>
+              </a>
+            </div>
+            <div class="p-2 border-t">
+              <form method="post" action="{% url 'admin_logout' %}" class="w-full">{% csrf_token %}
+                <button type="submit" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-red-50 text-red-600 w-full text-left">
+                  <i class="fas fa-sign-out-alt w-5"></i>
+                  <span>Logout</span>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Messages Section -->
+    {% if messages %}
+    <div class="mb-6">
+      {% for message in messages %}
+      <div class="{% if message.tags == 'success' %}bg-green-50 border border-green-200 text-green-700{% else %}bg-red-50 border border-red-200 text-red-700{% endif %} rounded-lg p-4 mb-2">
+        <div class="flex items-center">
+          <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} mr-2"></i>
+          <span>{{ message }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main Form Content -->
+    <div class="glass-card rounded-2xl p-6 md:p-8 shadow hover-lift w-full max-w-full">
+      <div class="mb-8">
+        <div class="flex items-center space-x-3 mb-4">
+          <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+            <i class="fas {% if action == 'Edit' %}fa-edit{% else %}fa-plus-circle{% endif %} text-white text-xl"></i>
+          </div>
+          <div>
+            <h2 class="text-2xl font-bold text-gray-900">
+              {% if action == 'Edit' %}
+                Edit Quiz Assessment
+              {% else %}
+                Create New Assessment
+              {% endif %}
+            </h2>
+            <p class="text-gray-600">
+              {% if action == 'Edit' %}
+                Modify the quiz details and questions
+              {% else %}
+                Design a comprehensive quiz for your students
+              {% endif %}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <form method="POST" class="space-y-8">
+        {% csrf_token %}
+        
+        <!-- Basic Quiz Information -->
+        <div class="space-y-6">
+          <h3 class="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-3">
+            <i class="fas fa-info-circle text-blue-600 mr-2"></i>Basic Information
+          </h3>
+          
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="space-y-6">
+              <div>
+                <label for="course" class="block text-sm font-medium text-gray-700 mb-3">Select Course *</label>
+                <select class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white" 
+                        id="course" name="course" required>
+                  <option value="">Choose a course...</option>
+                  {% for course in courses %}
+                  <option value="{{ course.id }}" 
+                    {% if action == 'Edit' and quiz.course.id == course.id %}selected{% endif %}>
+                    {{ course.course_name }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+              
+              <div>
+                <label for="title" class="block text-sm font-medium text-gray-700 mb-3">Quiz Title *</label>
+                <input type="text" class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                       id="title" name="title" 
+                       value="{% if action == 'Edit' %}{{ quiz.title }}{% endif %}"
+                       placeholder="Enter quiz title" required>
+              </div>
+              
+              <div>
+                <label for="description" class="block text-sm font-medium text-gray-700 mb-3">Description</label>
+                <textarea class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                          id="description" name="description" rows="4" 
+                          placeholder="Enter quiz description...">{% if action == 'Edit' %}{{ quiz.description }}{% endif %}</textarea>
+              </div>
+            </div>
+            
+            <div class="space-y-6">
+              <div>
+                <label for="due_date" class="block text-sm font-medium text-gray-700 mb-3">Due Date *</label>
+                <input type="datetime-local" class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white" 
+                       id="due_date" name="due_date" 
+                       value="{% if action == 'Edit' %}{{ quiz.due_date|date:'Y-m-d\TH:i' }}{% endif %}"
+                       required>
+              </div>
+              
+              <div>
+                <label for="time_limit" class="block text-sm font-medium text-gray-700 mb-3">Time Limit (minutes)</label>
+                <input type="number" class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                       id="time_limit" name="time_limit" 
+                       value="{% if action == 'Edit' %}{{ quiz.time_limit }}{% else %}30{% endif %}" 
+                       min="5" max="180">
+                <p class="text-sm text-gray-500 mt-2">Set the maximum time allowed for completing the quiz</p>
+              </div>
+              
+              <div>
+                <label for="passing_score" class="block text-sm font-medium text-gray-700 mb-3">Passing Score (%)</label>
+                <input type="number" class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                       id="passing_score" name="passing_score" 
+                       value="{% if action == 'Edit' %}{{ quiz.passing_score }}{% else %}70{% endif %}" 
+                       min="0" max="100">
+                <p class="text-sm text-gray-500 mt-2">Minimum score required to pass the quiz</p>
+              </div>
+
+             
+            </div>
+          </div>
+        </div>
+
+        <!-- Questions Section -->
+        <div class="space-y-6 pt-6 border-t border-gray-200">
+          <div class="flex justify-between items-center">
+            <h3 class="text-xl font-semibold text-gray-900">
+              <i class="fas fa-question-circle text-purple-600 mr-2"></i>Quiz Questions
+            </h3>
+            <div class="text-sm text-gray-500">
+              <span id="question-count">{{ questions_data|length|default:0 }}</span> questions added
+            </div>
+          </div>
+          
+          <div id="questions-container" class="space-y-4">
+            {% if action == 'Edit' and questions_data %}
+              {% for question in questions_data %}
+              <div class="question-card glass-card border border-gray-200 rounded-2xl p-6 hover-lift">
+                <div class="flex justify-between items-center mb-4">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                      {{ forloop.counter }}
+                    </div>
+                    <h4 class="font-semibold text-gray-900">Question {{ forloop.counter }}</h4>
+                  </div>
+                  <button type="button" class="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors remove-question" title="Remove Question">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Question Text *</label>
+                    <input type="text" name="question_text_{{ forloop.counter }}" 
+                           value="{{ question.text }}"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                           placeholder="Enter your question here..." required>
+                  </div>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Option A *</label>
+                      <input type="text" name="option_a_{{ forloop.counter }}" 
+                             value="{{ question.option_a }}"
+                             class="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all" 
+                             placeholder="Enter option A" required>
+                    </div>
+                    <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Option B *</label>
+                      <input type="text" name="option_b_{{ forloop.counter }}" 
+                             value="{{ question.option_b }}"
+                             class="w-full px-3 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 transition-all" 
+                             placeholder="Enter option B" required>
+                    </div>
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Option C</label>
+                      <input type="text" name="option_c_{{ forloop.counter }}" 
+                             value="{{ question.option_c }}"
+                             class="w-full px-3 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 transition-all" 
+                             placeholder="Enter option C (optional)">
+                    </div>
+                    <div class="bg-purple-50 border border-purple-200 rounded-xl p-4">
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Option D</label>
+                      <input type="text" name="option_d_{{ forloop.counter }}" 
+                             value="{{ question.option_d }}"
+                             class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 transition-all" 
+                             placeholder="Enter option D (optional)">
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Correct Answer *</label>
+                    <select name="correct_answer_{{ forloop.counter }}" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white" required>
+                      <option value="">Select correct answer...</option>
+                      <option value="A" {% if question.correct_answer == 'A' %}selected{% endif %}>Option A</option>
+                      <option value="B" {% if question.correct_answer == 'B' %}selected{% endif %}>Option B</option>
+                      <option value="C" {% if question.correct_answer == 'C' %}selected{% endif %}>Option C</option>
+                      <option value="D" {% if question.correct_answer == 'D' %}selected{% endif %}>Option D</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            {% else %}
+              <!-- Empty state for new quiz -->
+              <div id="empty-state" class="text-center py-12 text-gray-500 border-2 border-dashed border-gray-300 rounded-2xl">
+                <i class="fas fa-question-circle text-4xl mb-4 text-gray-400"></i>
+                <p class="text-lg font-medium text-gray-900 mb-2">No questions added yet</p>
+                <p class="text-sm">Click the button below to add your first question</p>
+              </div>
+            {% endif %}
+          </div>
+          
+          <button type="button" id="add-question" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-4 rounded-xl font-semibold hover:from-blue-600 hover:to-purple-700 transition-all shadow-lg">
+            <i class="fas fa-plus mr-2"></i>Add New Question
+          </button>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-end space-x-4 pt-8 border-t border-gray-200">
+          <a href="{% url 'admin_quizzes' %}" class="bg-gray-100 text-gray-700 px-8 py-4 rounded-xl font-semibold hover:bg-gray-200 transition-all shadow-lg">
+            <i class="fas fa-times mr-2"></i>Cancel
+          </a>
+          <button type="submit" class="bg-gradient-to-r from-green-500 to-blue-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-green-600 hover:to-blue-700 transition-all shadow-lg">
+            <i class="fas {% if action == 'Edit' %}fa-save{% else %}fa-plus-circle{% endif %} mr-2"></i>
+            {% if action == 'Edit' %}Update Quiz{% else %}Create Quiz{% endif %}
+          </button>
+        </div>
+      </form>
+    </div>
+
+  </main>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let questionCount = {{ questions_data|length|default:0 }};
+    
+    function updateQuestionCount() {
+        document.getElementById('question-count').textContent = questionCount;
+    }
+    
+    // Initialize question count
+    updateQuestionCount();
+    
+    document.getElementById('add-question').addEventListener('click', function() {
+        questionCount++;
+        const questionsContainer = document.getElementById('questions-container');
+        
+        // Remove empty state if it exists
+        const emptyState = document.getElementById('empty-state');
+        if (emptyState) {
+            emptyState.remove();
+        }
+        
+        const questionHtml = `
+            <div class="question-card glass-card border border-gray-200 rounded-2xl p-6 hover-lift">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                            ${questionCount}
+                        </div>
+                        <h4 class="font-semibold text-gray-900">Question ${questionCount}</h4>
+                    </div>
+                    <button type="button" class="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors remove-question" title="Remove Question">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Question Text *</label>
+                        <input type="text" name="question_text_${questionCount}" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                               placeholder="Enter your question here..." required>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Option A *</label>
+                            <input type="text" name="option_a_${questionCount}" 
+                                   class="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all" 
+                                   placeholder="Enter option A" required>
+                        </div>
+                        <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Option B *</label>
+                            <input type="text" name="option_b_${questionCount}" 
+                                   class="w-full px-3 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 transition-all" 
+                                   placeholder="Enter option B" required>
+                        </div>
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Option C</label>
+                            <input type="text" name="option_c_${questionCount}" 
+                                   class="w-full px-3 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 transition-all" 
+                                   placeholder="Enter option C (optional)">
+                        </div>
+                        <div class="bg-purple-50 border border-purple-200 rounded-xl p-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Option D</label>
+                            <input type="text" name="option_d_${questionCount}" 
+                                   class="w-full px-3 py-2 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 transition-all" 
+                                   placeholder="Enter option D (optional)">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Correct Answer *</label>
+                        <select name="correct_answer_${questionCount}" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white" required>
+                            <option value="">Select correct answer...</option>
+                            <option value="A">Option A</option>
+                            <option value="B">Option B</option>
+                            <option value="C">Option C</option>
+                            <option value="D">Option D</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        questionsContainer.insertAdjacentHTML('beforeend', questionHtml);
+        updateQuestionCount();
+        
+        // Add event listener to remove button
+        const removeBtn = questionsContainer.lastElementChild.querySelector('.remove-question');
+        removeBtn.addEventListener('click', function() {
+            this.closest('.question-card').remove();
+            questionCount--;
+            updateQuestionCount();
+            
+            // Renumber remaining questions
+            const questions = questionsContainer.querySelectorAll('.question-card');
+            if (questions.length === 0) {
+                questionsContainer.innerHTML = `
+                    <div id="empty-state" class="text-center py-12 text-gray-500 border-2 border-dashed border-gray-300 rounded-2xl">
+                        <i class="fas fa-question-circle text-4xl mb-4 text-gray-400"></i>
+                        <p class="text-lg font-medium text-gray-900 mb-2">No questions added yet</p>
+                        <p class="text-sm">Click the button below to add your first question</p>
+                    </div>
+                `;
+            } else {
+                questions.forEach((question, index) => {
+                    const numberDiv = question.querySelector('.w-8.h-8');
+                    const title = question.querySelector('h4');
+                    const inputs = question.querySelectorAll('input, select');
+                    
+                    // Update question number display
+                    numberDiv.textContent = index + 1;
+                    title.textContent = `Question ${index + 1}`;
+                    
+                    // Update input names
+                    inputs.forEach(input => {
+                        const name = input.getAttribute('name');
+                        if (name) {
+                            const newName = name.replace(/\d+$/, index + 1);
+                            input.setAttribute('name', newName);
+                        }
+                    });
+                });
+            }
+        });
+    });
+
+    // Add remove functionality to existing questions (for edit mode)
+    document.querySelectorAll('.remove-question').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.closest('.question-card').remove();
+            questionCount--;
+            updateQuestionCount();
+            
+            const questionsContainer = document.getElementById('questions-container');
+            const questions = questionsContainer.querySelectorAll('.question-card');
+            
+            if (questions.length === 0) {
+                questionsContainer.innerHTML = `
+                    <div id="empty-state" class="text-center py-12 text-gray-500 border-2 border-dashed border-gray-300 rounded-2xl">
+                        <i class="fas fa-question-circle text-4xl mb-4 text-gray-400"></i>
+                        <p class="text-lg font-medium text-gray-900 mb-2">No questions added yet</p>
+                        <p class="text-sm">Click the button below to add your first question</p>
+                    </div>
+                `;
+            } else {
+                // Renumber remaining questions
+                questions.forEach((question, index) => {
+                    const numberDiv = question.querySelector('.w-8.h-8');
+                    const title = question.querySelector('h4');
+                    const inputs = question.querySelectorAll('input, select');
+                    
+                    numberDiv.textContent = index + 1;
+                    title.textContent = `Question ${index + 1}`;
+                    
+                    // Update input names
+                    inputs.forEach(input => {
+                        const name = input.getAttribute('name');
+                        if (name) {
+                            const newName = name.replace(/\d+$/, index + 1);
+                            input.setAttribute('name', newName);
+                        }
+                    });
+                });
+            }
+        });
+    });
+});
+
+function toggleProfileDropdown() {
+  const dropdown = document.getElementById("profileDropdown");
+  dropdown.classList.toggle("hidden");
+}
+
+// Close dropdown when clicking outside
+document.addEventListener("click", function(event) {
+  const dropdown = document.getElementById("profileDropdown");
+  const button = document.querySelector('[onclick="toggleProfileDropdown()"]');
+  if (dropdown && button && !dropdown.contains(event.target) && !button.contains(event.target)) {
+    dropdown.classList.add("hidden");
+  }
+});
+
+// Update current time
+function updateDateTime() {
+  const now = new Date();
+  document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', { 
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+  });
+  document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', {
+    hour: '2-digit', minute: '2-digit'
+  });
+}
+
+setInterval(updateDateTime, 1000);
+updateDateTime();
+
+// Set minimum datetime for due date to current time
+const dueDateInput = document.getElementById('due_date');
+const now = new Date();
+const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+dueDateInput.min = localDateTime;
+</script>
+</body>
+</html>

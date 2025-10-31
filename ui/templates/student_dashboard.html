@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Dashboard | StudyPortal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    body { 
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+    }
+    
+    .sidebar-link { 
+      display: flex; 
+      align-items: center; 
+      padding: 0.75rem 1rem; 
+      border-radius: 0.5rem; 
+      transition: all 0.2s ease-in-out;
+      margin-bottom: 0.25rem;
+    }
+    
+    .sidebar-link:hover { 
+      background-color: rgba(79, 70, 229, 0.08); 
+      color: #4F46E5; 
+    }
+    
+    .sidebar-active { 
+      background-color: rgba(79, 70, 229, 0.12); 
+      color: #4F46E5; 
+      font-weight: 600;
+      position: relative;
+    }
+    
+    .sidebar-active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 4px;
+      background-color: #4F46E5;
+      border-radius: 0 4px 4px 0;
+    }
+    
+    .course-card { 
+      transition: all 0.3s ease; 
+      border-radius: 12px;
+      overflow: hidden;
+      height: 100%;
+    }
+    
+    .course-card:hover { 
+      transform: translateY(-6px); 
+      box-shadow: 0 12px 28px rgba(0,0,0,0.12); 
+    }
+    
+    .progress-ring {
+      transform: rotate(-90deg);
+    }
+    
+    .stats-card {
+      transition: all 0.2s ease;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    
+    .stats-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+    
+    .gradient-bg {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .gradient-sidebar {
+      background: linear-gradient(180deg, #4F46E5 0%, #7C73E6 100%);
+    }
+    
+    .course-progress-ring {
+      width: 60px;
+      height: 60px;
+    }
+
+    .alert-notification {
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .pulse-warning {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+    }
+
+    .pulse-success {
+      animation: pulseSuccess 2s infinite;
+    }
+
+    @keyframes pulseSuccess {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    /* Fallback icon styles */
+    .icon-fallback {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      margin-right: 12px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    /* Enhanced alert styles */
+    .high-completion-alert {
+      transition: all 0.3s ease;
+      border-left: 4px solid #f59e0b;
+    }
+
+    .high-completion-alert:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(245, 158, 11, 0.15);
+    }
+
+    .critical-completion-alert {
+      border-left: 4px solid #dc2626;
+    }
+
+    .critical-completion-alert:hover {
+      box-shadow: 0 8px 25px rgba(220, 38, 38, 0.15);
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+      }
+      
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      
+      .main-content {
+        margin-left: 0 !important;
+      }
+      
+      .mobile-menu-btn {
+        display: block;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+
+<div class="flex min-h-screen">
+  <!-- Mobile Menu Button -->
+  <button class="mobile-menu-btn fixed top-4 left-4 z-20 bg-indigo-600 text-white p-2 rounded-lg md:hidden" onclick="toggleMobileMenu()">
+    <span class="icon-fallback">☰</span>
+  </button>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar fixed inset-y-0 left-0 w-64 gradient-sidebar text-white shadow-xl z-10 md:translate-x-0">
+    <div class="flex flex-col h-full">
+      <div class="px-6 py-5 border-b border-indigo-500/30">
+        <div class="flex items-center">
+          <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center mr-3">
+            <span class="text-indigo-600 font-bold text-xl">🎓</span>
+          </div>
+          <h1 class="text-xl font-bold text-white">StudyPortal</h1>
+        </div>
+      </div>
+      
+      <nav class="flex-1 px-4 py-6 space-y-1">
+        <a href="{% url 'student_dashboard' %}" class="sidebar-link sidebar-active text-white">
+          <span class="icon-fallback">📊</span> Dashboard
+        </a>
+        <a href="{% url 'my_courses' %}" class="sidebar-link text-indigo-100 hover:text-white">
+          <span class="icon-fallback">🎓</span> My Courses
+        </a>
+        <a href="{% url 'student_quizzes' %}" class="sidebar-link text-indigo-100 hover:text-white">
+          <span class="icon-fallback">📝</span> Quizzes
+        </a>
+        <a href="{% url 'performance' %}" class="sidebar-link text-indigo-100 hover:text-white">
+          <span class="icon-fallback">📈</span> Performance
+        </a>
+        
+        <a href="{% url 'settings' %}" class="sidebar-link text-indigo-100 hover:text-white">
+          <span class="icon-fallback">⚙️</span> Settings
+        </a>
+      </nav>
+      
+      <div class="p-4 border-t border-indigo-500/30">
+        <div class="flex items-center mb-4 px-2">
+          <div class="w-10 h-10 rounded-full bg-indigo-400 flex items-center justify-center text-white font-bold mr-3">
+            {{ user.username|first|upper }}
+          </div>
+          <div>
+            <p class="text-white font-medium text-sm">{{ user.username }}</p>
+            <p class="text-indigo-200 text-xs">Student</p>
+          </div>
+        </div>
+        
+        <form method="post" action="{% url 'student_logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="logout-btn flex items-center w-full text-indigo-200 hover:text-white py-2 px-2 rounded-lg hover:bg-indigo-500/20 transition-colors">
+            <span class="icon-fallback">🚪</span> Logout
+          </button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content flex-1 md:ml-64 p-6">
+    <!-- Header -->
+    <header class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Welcome back, {{ user.username }} 👋</h1>
+        <p class="text-gray-500 mt-1">Here's your learning progress for today</p>
+      </div>
+      
+      <div class="flex items-center space-x-4">
+        <div class="relative">
+          <button onclick="toggleDropdown()" class="profile-button flex items-center space-x-2 bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm hover:shadow transition-all">
+            <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
+              {{ user.username|first|upper }}
+            </div>
+            <span class="text-gray-700 font-medium hidden sm:block">{{ user.username }}</span>
+            <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 0;">▼</span>
+          </button>
+          
+          <div id="profileDropdown" class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-10 hidden">
+            <div class="px-4 py-3 border-b border-gray-100">
+              <p class="font-semibold text-gray-900">{{ user.username }}</p>
+              <p class="text-sm text-gray-500">Student Account</p>
+            </div>
+            <div class="p-2">
+              <a href="{% url 'settings' %}" class="settings-menu-item flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                <span class="icon-fallback" style="margin-right: 8px;">⚙️</span> Settings
+              </a>
+            </div>
+            <div class="p-2 border-t border-gray-100">
+              <form method="post" action="{% url 'student_logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="flex items-center w-full px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                  <span class="icon-fallback" style="margin-right: 8px;">🚪</span> Logout
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ========== TASK 3: SINGLE HIGH COMPLETION ALERTS SECTION ========== -->
+    {% if has_high_completion_alerts %}
+    <section class="mb-6" id="highCompletionAlerts">
+      <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-6 alert-notification">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center">
+            <div class="bg-amber-100 p-3 rounded-lg mr-4">
+              <span class="icon-fallback" style="color: #d97706; font-size: 1.5rem;">🏆</span>
+            </div>
+            <div>
+              <h3 class="text-xl font-bold text-amber-800">Almost There! Complete Your Courses</h3>
+              <p class="text-amber-700">You're making great progress on these courses</p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="bg-amber-100 text-amber-800 text-sm px-3 py-1 rounded-full font-medium">
+              {{ high_completion_alerts|length }} course{{ high_completion_alerts|pluralize }} almost done
+            </span>
+            <button onclick="dismissAllAlerts()" class="text-sm text-amber-600 hover:text-amber-800 transition-colors">
+              Dismiss All
+            </button>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {% for alert in high_completion_alerts %}
+          <div class="high-completion-alert bg-white border border-amber-200 rounded-lg p-4 {% if alert.priority == 'urgent' %}pulse-warning critical-completion-alert{% else %}pulse-success{% endif %}" 
+               data-alert-id="{{ alert.id }}">
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <div class="flex items-center mb-2">
+                  <h4 class="font-semibold {% if alert.priority == 'urgent' %}text-red-800{% elif alert.priority == 'high' %}text-orange-800{% else %}text-amber-800{% endif %}">
+                    {{ alert.course.course_name }}
+                  </h4>
+                  <span class="ml-2 text-xs {% if alert.priority == 'urgent' %}bg-red-100 text-red-800{% elif alert.priority == 'high' %}bg-orange-100 text-orange-800{% else %}bg-amber-100 text-amber-800{% endif %} px-2 py-1 rounded-full">
+                    {{ alert.student_course.course_progress|floatformat:0 }}%
+                  </span>
+                </div>
+                
+                <p class="text-sm {% if alert.priority == 'urgent' %}text-red-700{% elif alert.priority == 'high' %}text-orange-700{% else %}text-amber-700{% endif %} mb-3">
+                  {{ alert.message }}
+                </p>
+                
+                <!-- Progress Bar -->
+                <div class="w-full bg-amber-200 rounded-full h-2 mb-2">
+                  <div class="{% if alert.priority == 'urgent' %}bg-red-600{% elif alert.priority == 'high' %}bg-orange-600{% else %}bg-amber-600{% endif %} h-2 rounded-full transition-all duration-500" 
+                       style="width: {{ alert.student_course.course_progress }}%"></div>
+                </div>
+                
+                <div class="flex justify-between text-xs {% if alert.priority == 'urgent' %}text-red-600{% elif alert.priority == 'high' %}text-orange-600{% else %}text-amber-600{% endif %} mb-3">
+                  <span>{{ alert.student_course.watched_videos_count }}/{{ alert.student_course.total_videos_count }} videos watched</span>
+                  <span class="font-semibold">{{ alert.student_course.course_progress|floatformat:1 }}% complete</span>
+                </div>
+                
+                <div class="flex space-x-2">
+                  <a href="{% url 'course_detail' alert.course.id %}" 
+                     class="flex-1 {% if alert.priority == 'urgent' %}bg-red-600 hover:bg-red-700{% elif alert.priority == 'high' %}bg-orange-600 hover:bg-orange-700{% else %}bg-amber-600 hover:bg-amber-700{% endif %} text-white px-3 py-2 rounded text-sm font-medium transition-colors text-center">
+                    Continue Learning
+                  </a>
+                  <button onclick="dismissAlert({{ alert.id }})" 
+                          class="text-xs text-gray-500 hover:text-gray-700 transition-colors px-2">
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- Quiz Notifications Section -->
+    {% if total_pending_quizzes > 0 %}
+    <div class="mb-6">
+      <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4 pulse-warning">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <div class="bg-amber-100 p-2 rounded-lg mr-3">
+              <span class="icon-fallback" style="color: #d97706;">⚠️</span>
+            </div>
+            <div>
+              <h3 class="font-semibold text-amber-800">Quiz Alert!</h3>
+              <p class="text-amber-700 text-sm">You have {{ total_pending_quizzes }} pending quiz{{ total_pending_quizzes|pluralize:"zes" }} to complete.</p>
+            </div>
+          </div>
+          <a href="{% url 'student_quizzes' %}" class="bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors">
+            View Quizzes
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Stats -->
+    <section class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div class="stats-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center cursor-pointer" onclick="window.location.href='{% url 'my_courses' %}'">
+        <div class="mr-4 p-3 rounded-lg bg-indigo-50 text-indigo-600">
+          <span class="icon-fallback">📚</span>
+        </div>
+        <div>
+          <p class="text-gray-500 text-sm">Total Courses</p>
+          <p class="text-2xl font-bold text-gray-900">{{ total_courses }}</p>
+        </div>
+      </div>
+      
+      <div class="stats-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center cursor-pointer" onclick="window.location.href='{% url 'my_courses' %}'">
+        <div class="mr-4 p-3 rounded-lg bg-green-50 text-green-600">
+          <span class="icon-fallback">✅</span>
+        </div>
+        <div>
+          <p class="text-gray-500 text-sm">Completed</p>
+          <p class="text-2xl font-bold text-gray-900">{{ completed_courses }}</p>
+        </div>
+      </div>
+      
+      <div class="stats-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center cursor-pointer" onclick="window.location.href='{% url 'my_courses' %}'">
+        <div class="mr-4 p-3 rounded-lg bg-amber-50 text-amber-600">
+          <span class="icon-fallback">⏱️</span>
+        </div>
+        <div>
+          <p class="text-gray-500 text-sm">In Progress</p>
+          <p class="text-2xl font-bold text-gray-900">{{ in_progress_courses }}</p>
+        </div>
+      </div>
+
+      <div class="stats-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center cursor-pointer" onclick="window.location.href='{% url 'student_quizzes' %}'">
+        <div class="mr-4 p-3 rounded-lg bg-blue-50 text-blue-600">
+          <span class="icon-fallback">📝</span>
+        </div>
+        <div>
+          <p class="text-gray-500 text-sm">Quizzes Done</p>
+          <p class="text-2xl font-bold text-gray-900">{{ completed_quizzes }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quiz Overview Section -->
+    <section class="mb-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Pending Quizzes Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="p-5 border-b border-gray-100">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <span class="icon-fallback" style="color: #f59e0b; margin-right: 8px;">⏰</span>
+                Upcoming Quizzes
+              </h3>
+              <a href="{% url 'student_quizzes' %}" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium">View All</a>
+            </div>
+          </div>
+          <div class="p-5">
+            {% if pending_quizzes %}
+              <div class="space-y-4">
+                {% for quiz in pending_quizzes %}
+                <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-indigo-300 transition-colors">
+                  <div class="flex-1">
+                    <h4 class="font-medium text-gray-900">{{ quiz.title }}</h4>
+                    <div class="flex items-center text-sm text-gray-500 mt-1">
+                      <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 4px;">📖</span>
+                      <span>{{ quiz.course.course_name }}</span>
+                      <span class="mx-2">•</span>
+                      <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 4px;">⏱️</span>
+                      <span>{{ quiz.time_limit }} mins</span>
+                    </div>
+                    <div class="flex items-center text-sm text-amber-600 mt-1">
+                      <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 4px;">📅</span>
+                      <span>Due: {{ quiz.due_date|date:"M d, Y" }}</span>
+                      {% if quiz.days_remaining < 3 %}
+                      <span class="ml-2 bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">Urgent</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                  <a href="{% url 'take_quiz' quiz.id %}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors whitespace-nowrap">
+                    Start Quiz
+                  </a>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center py-8">
+                <span class="icon-fallback" style="width: 48px; height: 48px; color: #10b981; margin: 0 auto 12px;">✅</span>
+                <p class="text-gray-500">No pending quizzes. Great job!</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Recent Quiz Results -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="p-5 border-b border-gray-100">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+              <span class="icon-fallback" style="color: #10b981; margin-right: 8px;">📊</span>
+              Recent Quiz Results
+            </h3>
+          </div>
+          <div class="p-5">
+            {% if recent_attempts %}
+              <div class="space-y-4">
+                {% for attempt in recent_attempts %}
+                <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                  <div class="flex-1">
+                    <h4 class="font-medium text-gray-900">{{ attempt.quiz.title }}</h4>
+                    <div class="flex items-center text-sm text-gray-500 mt-1">
+                      <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 4px;">📖</span>
+                      <span>{{ attempt.quiz.course.course_name }}</span>
+                      <span class="mx-2">•</span>
+                      <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 4px;">📅</span>
+                      <span>{{ attempt.completed_at|date:"M d, Y" }}</span>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {% if attempt.score >= attempt.quiz.passing_score %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                      {{ attempt.score|floatformat:1 }}%
+                    </span>
+                    <div class="mt-1">
+                      <a href="{% url 'quiz_result' attempt.quiz.id %}" class="text-sm text-indigo-600 hover:text-indigo-700">View Result</a>
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center py-8">
+                <span class="icon-fallback" style="width: 48px; height: 48px; color: #d1d5db; margin: 0 auto 12px;">📝</span>
+                <p class="text-gray-500">No quiz attempts yet</p>
+                <p class="text-sm text-gray-400 mt-1">Complete your first quiz to see results here</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Course Progress Section -->
+    <section class="mb-8">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">Course Progress Overview</h2>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="coursesContainer">
+        {% for item in courses_progress %}
+        <div class="course-card bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+          <!-- Course Image -->
+          {% if item.student_course.course.image %}
+            <div class="relative">
+              <img src="{{ item.student_course.course.image.url }}" alt="{{ item.student_course.course.course_name }}" class="w-full h-40 object-cover">
+              <div class="absolute top-3 right-3">
+                {% if item.student_course.completed %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <span class="icon-fallback" style="width: 12px; height: 12px; margin-right: 4px;">✅</span>
+                    Completed
+                  </span>
+                {% elif item.progress > 0 %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                    <span class="icon-fallback" style="width: 12px; height: 12px; margin-right: 4px;">⏱️</span>
+                    In Progress
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    <span class="icon-fallback" style="width: 12px; height: 12px; margin-right: 4px;">▶️</span>
+                    Not Started
+                  </span>
+                {% endif %}
+              </div>
+            </div>
+          {% else %}
+            <div class="w-full h-40 bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white">
+              <span class="icon-fallback" style="width: 40px; height: 40px;">📚</span>
+            </div>
+          {% endif %}
+
+          <div class="p-5 flex-1 flex flex-col">
+            <div class="flex justify-between items-start mb-3">
+              <h3 class="text-lg font-semibold text-gray-900">{{ item.student_course.course.course_name }}</h3>
+              <div class="course-progress-ring relative">
+                <svg class="w-full h-full" viewBox="0 0 36 36">
+                  <path class="text-gray-200 stroke-current"
+                    stroke-width="3"
+                    fill="none"
+                    d="M18 2.0845
+                      a 15.9155 15.9155 0 0 1 0 31.831
+                      a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <path class="text-indigo-600 stroke-current"
+                    stroke-width="3"
+                    stroke-dasharray="{{ item.progress }}, 100"
+                    stroke-linecap="round"
+                    fill="none"
+                    d="M18 2.0845
+                      a 15.9155 15.9155 0 0 1 0 31.831
+                      a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <text x="18" y="20.5" class="text-[8px] font-semibold text-gray-700" text-anchor="middle" dominant-baseline="middle">{{ item.progress }}%</text>
+                </svg>
+              </div>
+            </div>
+            
+            <p class="text-gray-600 text-sm mb-4 flex-1">{{ item.student_course.course.description|truncatechars:120 }}</p>
+
+            <!-- Progress Bar -->
+            <div class="mb-4">
+              <div class="flex justify-between text-xs text-gray-500 mb-1">
+                <span>Progress</span>
+                <span>{{ item.progress }}%</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-indigo-600 h-2 rounded-full" style="width: {{ item.progress }}%"></div>
+              </div>
+            </div>
+
+            <!-- Course Status -->
+            <div class="mt-2">
+              <div class="flex items-center text-sm text-gray-600">
+                <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 8px; color: #9ca3af;">📅</span>
+                <span>Enrolled: {{ item.student_course.enrolled_at|date:"M d, Y" }}</span>
+              </div>
+              {% if item.student_course.completed %}
+              <div class="flex items-center text-sm text-green-600 mt-1">
+                <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 8px;">✅</span>
+                <span>Completed: {{ item.student_course.completed_at|date:"M d, Y" }}</span>
+              </div>
+              {% endif %}
+            </div>
+
+            <!-- Action Button -->
+            <div class="mt-4 pt-4 border-t border-gray-100">
+              <a href="{% url 'course_detail' item.student_course.course.id %}" 
+                 class="w-full bg-indigo-600 text-white text-center py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors block">
+                {% if item.student_course.completed %}
+                Review Course
+                {% else %}
+                Continue Learning
+                {% endif %}
+              </a>
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center py-12">
+          <span class="icon-fallback" style="width: 64px; height: 64px; color: #d1d5db; margin: 0 auto 16px;">📚</span>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">No courses enrolled yet</h3>
+          <p class="text-gray-500 mb-4">Start your learning journey by enrolling in courses</p>
+          <a href="{% url 'enroll_courses_list' %}" class="bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors">
+            Browse Courses
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+  // Initialize Lucide icons with error handling
+  function initializeIcons() {
+    try {
+      if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+        console.log('Lucide icons initialized successfully');
+      } else {
+        console.warn('Lucide not available, using fallback icons');
+        showFallbackIcons();
+      }
+    } catch (error) {
+      console.error('Error initializing Lucide icons:', error);
+      showFallbackIcons();
+    }
+  }
+
+  // Show fallback icons if Lucide fails
+  function showFallbackIcons() {
+    const fallbackIcons = document.querySelectorAll('.icon-fallback');
+    fallbackIcons.forEach(icon => {
+      icon.style.display = 'inline-block';
+    });
+  }
+
+  // UI interaction functions
+  function toggleDropdown() {
+    document.getElementById("profileDropdown").classList.toggle("hidden");
+  }
+  
+  function toggleMobileMenu() {
+    document.getElementById("sidebar").classList.toggle("open");
+  }
+  
+  // Close dropdown when clicking outside
+  window.onclick = function(event) {
+    if (!event.target.matches('.profile-button') && !event.target.closest('.profile-button')) {
+      const dropdown = document.getElementById("profileDropdown");
+      if (!dropdown.classList.contains('hidden')) {
+        dropdown.classList.add('hidden');
+      }
+    }
+  }
+
+  // Alert Management Functions
+  function dismissAlert(alertId) {
+    const alertElement = document.querySelector(`[data-alert-id="${alertId}"]`);
+    if (alertElement) {
+      // Add fade out animation
+      alertElement.style.opacity = '0';
+      alertElement.style.transition = 'opacity 0.5s ease';
+      
+      setTimeout(() => {
+        alertElement.style.display = 'none';
+        
+        // Update alert count
+        updateAlertCount();
+        
+        // Send AJAX request to mark alert as dismissed in database
+        fetch(`/api/alerts/${alertId}/dismiss/`, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+          },
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            console.log('Alert dismissed successfully');
+          }
+        })
+        .catch(error => console.error('Error dismissing alert:', error));
+        
+      }, 500);
+    }
+  }
+
+  function dismissAllAlerts() {
+    const alerts = document.querySelectorAll('.high-completion-alert');
+    let dismissedCount = 0;
+    
+    alerts.forEach(alert => {
+      const alertId = alert.getAttribute('data-alert-id');
+      if (alertId) {
+        // Add fade out animation
+        alert.style.opacity = '0';
+        alert.style.transition = 'opacity 0.5s ease';
+        
+        setTimeout(() => {
+          alert.style.display = 'none';
+          dismissedCount++;
+          
+          // Send AJAX request for each alert
+          fetch(`/api/alerts/${alertId}/dismiss/`, {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': getCookie('csrftoken'),
+              'Content-Type': 'application/json',
+            },
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.status === 'success') {
+              console.log(`Alert ${alertId} dismissed successfully`);
+            }
+          })
+          .catch(error => console.error('Error dismissing alert:', error));
+          
+          // If all alerts are processed, hide the entire section
+          if (dismissedCount === alerts.length) {
+            setTimeout(() => {
+              document.getElementById('highCompletionAlerts').style.display = 'none';
+            }, 600);
+          }
+        }, dismissedCount * 100); // Stagger the animations
+      }
+    });
+  }
+
+  function updateAlertCount() {
+    const remainingAlerts = document.querySelectorAll('.high-completion-alert:not([style*="display: none"])').length;
+    const alertCountElement = document.querySelector('#highCompletionAlerts .bg-amber-100');
+    
+    if (alertCountElement) {
+      if (remainingAlerts > 0) {
+        alertCountElement.textContent = `${remainingAlerts} course${remainingAlerts > 1 ? 's' : ''} almost done`;
+      } else {
+        // Hide the entire section if no alerts left
+        document.getElementById('highCompletionAlerts').style.display = 'none';
+      }
+    }
+  }
+
+  // CSRF token helper function
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  // Auto-dismiss high completion alerts after 30 seconds (optional)
+  setTimeout(() => {
+    const alerts = document.querySelectorAll('.high-completion-alert');
+    alerts.forEach((alert, index) => {
+      setTimeout(() => {
+        if (alert.parentElement) {
+          const alertId = alert.getAttribute('data-alert-id');
+          dismissAlert(alertId);
+        }
+      }, index * 1000); // Stagger dismissals
+    });
+  }, 30000); // 30 seconds
+
+  // Initialize when page loads
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize icons
+    initializeIcons();
+    
+    // Stats cards click handlers
+    document.querySelectorAll('.stats-card').forEach(card => {
+      card.addEventListener('click', function() {
+        const statType = this.querySelector('p').textContent;
+        if (statType.includes('Quizzes')) {
+          window.location.href = "{% url 'student_quizzes' %}";
+        } else if (statType.includes('Courses')) {
+          window.location.href = "{% url 'my_courses' %}";
+        }
+      });
+    });
+
+    // Close dropdown when clicking on menu items
+    document.querySelectorAll('#profileDropdown a, #profileDropdown button').forEach(item => {
+      item.addEventListener('click', function() {
+        document.getElementById("profileDropdown").classList.add("hidden");
+      });
+    });
+
+    // Log high completion alert interactions
+    const continueButtons = document.querySelectorAll('.high-completion-alert a[href*="course_detail"]');
+    continueButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const alertElement = this.closest('.high-completion-alert');
+        if (alertElement) {
+          const courseName = alertElement.querySelector('h4').textContent;
+          console.log(`User clicked to continue high completion course: ${courseName}`);
+          // You can add analytics tracking here
+        }
+      });
+    });
+  });
+
+  // Refresh alerts every 2 minutes to check for new high completion courses
+  setInterval(() => {
+    if (document.getElementById('highCompletionAlerts')) {
+      window.location.reload();
+    }
+  }, 120000); // 2 minutes
+</script>
+</body>
+</html>

@@ -1,0 +1,1297 @@
+{% load youtube_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ course.course_name }} | StudyPortal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+    }
+    
+    .gradient-bg {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      transition: all 0.2s ease-in-out;
+      margin-bottom: 0.25rem;
+    }
+    
+    .sidebar-link:hover {
+      background-color: rgba(79, 70, 229, 0.08);
+      color: #4F46E5;
+    }
+    
+    .sidebar-active {
+      background-color: rgba(79, 70, 229, 0.12);
+      color: #4F46E5;
+      font-weight: 600;
+      position: relative;
+    }
+    
+    .sidebar-active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 4px;
+      background-color: #4F46E5;
+      border-radius: 0 4px 4px 0;
+    }
+    
+    .gradient-sidebar {
+      background: linear-gradient(180deg, #4F46E5 0%, #7C73E6 100%);
+    }
+    
+    .course-card {
+      transition: all 0.3s ease;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    
+    .course-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+    }
+    
+    .stats-card {
+      transition: all 0.2s ease;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    
+    .stats-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+    
+    .video-card {
+      transition: all 0.3s ease;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      background: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      cursor: pointer;
+    }
+    
+    .video-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    
+    .video-thumbnail {
+      position: relative;
+      padding-bottom: 56.25%;
+      height: 0;
+      overflow: hidden;
+      border-radius: 12px 12px 0 0;
+    }
+    
+    .video-thumbnail img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+    
+    .video-card:hover .video-thumbnail img {
+      transform: scale(1.05);
+    }
+    
+    .play-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0,0,0,0.3);
+      color: white;
+      opacity: 0;
+      transition: opacity 0.3s;
+      border-radius: 12px;
+    }
+    
+    .video-card:hover .play-overlay {
+      opacity: 1;
+    }
+    
+    .video-number {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: rgba(79, 70, 229, 0.9);
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+    
+    .video-progress-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: rgba(255,255,255,0.3);
+    }
+    
+    .video-progress-fill {
+      height: 100%;
+      background: #4F46E5;
+      transition: width 0.3s ease;
+    }
+    
+    .watched-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(16, 185, 129, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    
+    .video-card.watched:hover .watched-overlay {
+      opacity: 1;
+    }
+    
+    .watched-badge {
+      background: #10b981;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .video-card.watched {
+      border-left: 4px solid #10b981;
+    }
+    
+    .video-card.unwatched {
+      border-left: 4px solid #e5e7eb;
+    }
+    
+    .modal-backdrop {
+      background-color: rgba(0,0,0,0.7);
+      backdrop-filter: blur(5px);
+    }
+    
+    .progress-ring {
+      transform: rotate(-90deg);
+    }
+    
+    .progress-ring-circle {
+      transition: stroke-dashoffset 0.5s ease;
+    }
+    
+    .course-progress-ring {
+      width: 60px;
+      height: 60px;
+    }
+
+    /* Enhanced Quiz Cards */
+    .quiz-card {
+      border-left: 4px solid #e5e7eb;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .quiz-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+    
+    .quiz-card.passed {
+      border-left-color: #10b981;
+    }
+    
+    .quiz-card.failed {
+      border-left-color: #ef4444;
+    }
+    
+    .quiz-card.pending {
+      border-left-color: #f59e0b;
+    }
+    
+    .quiz-card.expired {
+      border-left-color: #6b7280;
+    }
+    
+    .quiz-card.available {
+      border-left-color: #3b82f6;
+    }
+    
+    .quiz-status-badge {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .quiz-progress-ring {
+      width: 60px;
+      height: 60px;
+    }
+    
+    .quiz-details-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    
+    .quiz-detail-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+    
+    .quiz-detail-icon {
+      width: 16px;
+      height: 16px;
+      color: #9ca3af;
+    }
+    
+    .quiz-action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+    
+    .quiz-action-btn.primary {
+      background-color: #10b981;
+      color: white;
+    }
+    
+    .quiz-action-btn.primary:hover {
+      background-color: #059669;
+    }
+    
+    .quiz-action-btn.secondary {
+      background-color: #3b82f6;
+      color: white;
+    }
+    
+    .quiz-action-btn.secondary:hover {
+      background-color: #2563eb;
+    }
+    
+    .quiz-action-btn.disabled {
+      background-color: #d1d5db;
+      color: #6b7280;
+      cursor: not-allowed;
+    }
+    
+    .quiz-score-display {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    .quiz-score-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    
+    .quiz-score-passed {
+      color: #10b981;
+    }
+    
+    .quiz-score-failed {
+      color: #ef4444;
+    }
+    
+    .quiz-score-label {
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+    
+    .quiz-completion-date {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin-top: 8px;
+    }
+    
+    .quiz-card-header {
+      display: flex;
+      justify-content: between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    
+    .quiz-card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 4px;
+    }
+    
+    .quiz-card-description {
+      color: #6b7280;
+      margin-bottom: 16px;
+    }
+    
+    .quiz-card-content {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .quiz-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #f3f4f6;
+    }
+    
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+      }
+      
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      
+      .main-content {
+        margin-left: 0 !important;
+      }
+      
+      .mobile-menu-btn {
+        display: block;
+      }
+      
+      .video-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .quiz-details-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .quiz-card-footer {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+      }
+      
+      .quiz-action-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+
+<div class="flex min-h-screen">
+  <!-- Mobile Menu Button -->
+  <button class="mobile-menu-btn fixed top-4 left-4 z-20 bg-indigo-600 text-white p-2 rounded-lg md:hidden" onclick="toggleMobileMenu()">
+    <span class="text-lg">☰</span>
+  </button>
+
+  <!-- Sidebar - UPDATED WITH SYMBOLS -->
+  <aside id="sidebar" class="sidebar fixed inset-y-0 left-0 w-64 gradient-sidebar text-white shadow-xl z-10 md:translate-x-0">
+    <div class="flex flex-col h-full">
+      <div class="px-6 py-5 border-b border-indigo-500/30">
+        <div class="flex items-center">
+          <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center mr-3">
+            <span class="text-indigo-600 font-bold text-xl">🎓</span>
+          </div>
+          <h1 class="text-xl font-bold text-white">StudyPortal</h1>
+        </div>
+      </div>
+      
+      <nav class="flex-1 px-4 py-6 space-y-1">
+        <a href="{% url 'student_dashboard' %}" class="sidebar-link text-indigo-100 hover:text-white">
+          <span class="icon-fallback">📊</span> Dashboard
+        </a>
+        <a href="{% url 'my_courses' %}" class="sidebar-link sidebar-active text-white">
+          <span class="icon-fallback">🎓</span> My Courses
+        </a>
+        <a href="{% url 'student_quizzes' %}" class="sidebar-link text-indigo-100 hover:text-white">
+          <span class="icon-fallback">📝</span> Quizzes
+        </a>
+        <a href="{% url 'performance' %}" class="sidebar-link text-indigo-100 hover:text-white">
+          <span class="icon-fallback">📈</span> Performance
+        </a>
+        
+        <a href="{% url 'settings' %}" class="sidebar-link text-indigo-100 hover:text-white">
+          <span class="icon-fallback">⚙️</span> Settings
+        </a>
+      </nav>
+      
+      <div class="p-4 border-t border-indigo-500/30">
+        <div class="flex items-center mb-4 px-2">
+          <div class="w-10 h-10 rounded-full bg-indigo-400 flex items-center justify-center text-white font-bold mr-3">
+            {{ user.username|first|upper }}
+          </div>
+          <div>
+            <p class="text-white font-medium text-sm">{{ user.username }}</p>
+            <p class="text-indigo-200 text-xs">Student</p>
+          </div>
+        </div>
+        
+        <form method="post" action="{% url 'student_logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="logout-btn flex items-center w-full text-indigo-200 hover:text-white py-2 px-2 rounded-lg hover:bg-indigo-500/20 transition-colors">
+            <span class="text-lg mr-3">🚪</span> Logout
+          </button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content flex-1 md:ml-64">
+    <!-- Header -->
+    <div class="gradient-bg text-white p-6 md:p-8">
+      <div class="max-w-6xl mx-auto">
+        <div class="flex flex-col md:flex-row md:items-center justify-between">
+          <div class="mb-4 md:mb-0">
+            <button onclick="window.location.href='{% url 'my_courses' %}'" 
+                    class="flex items-center text-white/80 hover:text-white mb-4 transition-colors">
+              <span class="text-lg mr-2">⬅️</span> Back to My Courses
+            </button>
+            <h1 class="text-3xl md:text-4xl font-bold mb-2">{{ course.course_name }}</h1>
+            <p class="text-white/80 text-lg">{{ course.description }}</p>
+          </div>
+          
+          <div class="flex items-center space-x-4">
+            <div class="relative">
+              <button onclick="toggleDropdown()" class="profile-button flex items-center space-x-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-3 py-2 hover:bg-white/20 transition-all">
+                <div class="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center font-bold">
+                  {{ user.username|first|upper }}
+                </div>
+                <span class="text-white font-medium hidden sm:block">{{ user.username }}</span>
+                <span class="text-white text-sm">▼</span>
+              </button>
+              
+              <div id="profileDropdown" class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-10 hidden">
+                <div class="px-4 py-3 border-b border-gray-100">
+                  <p class="font-semibold text-gray-900">{{ user.username }}</p>
+                  <p class="text-sm text-gray-500">Student Account</p>
+                </div>
+                <div class="p-2">
+                  <a href="{% url 'settings' %}" class="settings-menu-item flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                    <span class="text-lg mr-2">⚙️</span> Settings
+                  </a>
+                </div>
+                <div class="p-2 border-t border-gray-100">
+                  <form method="post" action="{% url 'student_logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="flex items-center w-full px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                      <span class="text-lg mr-2">🚪</span> Logout
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Course Content -->
+    <div class="max-w-6xl mx-auto p-6 md:p-8">
+      <!-- Debug Section - Remove this after fixing -->
+      
+
+      <!-- Quick Stats - UPDATED WITH SYMBOLS -->
+      <section class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+        <div class="stats-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
+          <div class="mr-4 p-3 rounded-lg bg-indigo-50 text-indigo-600">
+            <span class="text-xl">🎥</span>
+          </div>
+          <div>
+            <p class="text-gray-500 text-sm">Total Videos</p>
+            <p class="text-2xl font-bold text-gray-900">{{ videos|length }}</p>
+          </div>
+        </div>
+        
+        <div class="stats-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
+          <div class="mr-4 p-3 rounded-lg bg-green-50 text-green-600">
+            <span class="text-xl">✅</span>
+          </div>
+          <div>
+            <p class="text-gray-500 text-sm">Watched</p>
+            <p class="text-2xl font-bold text-gray-900">{{ watched_videos_count|default:0 }}</p>
+          </div>
+        </div>
+        
+        <div class="stats-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
+          <div class="mr-4 p-3 rounded-lg bg-amber-50 text-amber-600">
+            <span class="text-xl">⏱️</span>
+          </div>
+          <div>
+            <p class="text-gray-500 text-sm">Remaining</p>
+            <p class="text-2xl font-bold text-gray-900">{{ remaining_videos|default:0 }}</p>
+          </div>
+        </div>
+
+        <div class="stats-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
+          <div class="mr-4 p-3 rounded-lg bg-blue-50 text-blue-600">
+            <span class="text-xl">📊</span>
+          </div>
+          <div>
+            <p class="text-gray-500 text-sm">Progress</p>
+            <p class="text-2xl font-bold text-gray-900">
+              {% if videos|length > 0 %}
+                {{ progress_percent|default:0 }}%
+              {% else %}
+                0%
+              {% endif %}
+            </p>
+          </div>
+        </div>
+
+        <div class="stats-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
+          <div class="mr-4 p-3 rounded-lg bg-purple-50 text-purple-600">
+            <span class="text-xl">📝</span>
+          </div>
+          <div>
+            <p class="text-gray-500 text-sm">Quizzes</p>
+            <p class="text-2xl font-bold text-gray-900">{{ quizzes|length }}</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Main Content -->
+        <div class="lg:col-span-2">
+          <!-- Course Progress -->
+          {% if student_course %}
+          <div class="course-card bg-white p-6 mb-8">
+            <div class="flex flex-col md:flex-row md:items-center justify-between mb-6">
+              <div>
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Your Progress</h2>
+                <p class="text-gray-600">{{ watched_videos_count|default:0 }} of {{ videos|length }} videos completed</p>
+              </div>
+              
+              <div class="flex items-center space-x-4 mt-4 md:mt-0">
+                <div class="course-progress-ring relative">
+                  <svg class="w-full h-full" viewBox="0 0 36 36">
+                    <path class="text-gray-200 stroke-current"
+                      stroke-width="3"
+                      fill="none"
+                      d="M18 2.0845
+                        a 15.9155 15.9155 0 0 1 0 31.831
+                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                    <path class="text-indigo-600 stroke-current"
+                      stroke-width="3"
+                      stroke-dasharray="{{ progress_percent|default:0 }}, 100"
+                      stroke-linecap="round"
+                      fill="none"
+                      d="M18 2.0845
+                        a 15.9155 15.9155 0 0 1 0 31.831
+                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                    <text x="18" y="20.5" class="text-[8px] font-semibold text-gray-700" text-anchor="middle" dominant-baseline="middle">{{ progress_percent|default:0 }}%</text>
+                  </svg>
+                </div>
+                
+                {% if not student_course.completed %}
+                <form id="completeCourseForm" method="POST" action="{% url 'complete_course' student_course.id %}">
+                  {% csrf_token %}
+                  <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center">
+                    <span class="text-lg mr-2">✅</span>
+                    Mark as Completed
+                  </button>
+                </form>
+                {% else %}
+                <span class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center">
+                  <span class="text-lg mr-2">✅</span>
+                  Completed
+                </span>
+                {% endif %}
+              </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="mb-4">
+              <div class="flex justify-between text-sm text-gray-600 mb-2">
+                <span>Course Progress</span>
+                <span>{{ progress_percent|default:0 }}%</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-3">
+                <div class="bg-indigo-600 h-3 rounded-full transition-all duration-500" style="width: {{ progress_percent|default:0 }}%"></div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+          
+          <!-- Course Videos -->
+          <div class="course-card bg-white p-6 mb-8">
+            <div class="flex flex-col md:flex-row md:items-center justify-between mb-6">
+              <h2 class="text-2xl font-bold text-gray-900 mb-4 md:mb-0">Course Videos</h2>
+              <div class="flex items-center space-x-4">
+                <span class="text-gray-500 text-sm">{{ videos|length }} videos</span>
+                <div class="bg-gray-50 rounded-lg px-3 py-2">
+                  <select id="videoFilter" class="bg-transparent border-none text-sm text-gray-700 focus:outline-none focus:ring-0">
+                    <option value="all">All Videos</option>
+                    <option value="watched">Watched</option>
+                    <option value="unwatched">Unwatched</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            {% if videos %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="videosContainer">
+              {% for video in videos %}
+                {% with video_id=video.youtube_url|youtube_id %}
+                <div class="video-card {% if video.id in watched_videos %}watched{% else %}unwatched{% endif %}" 
+                     onclick="openVideoModal('{{ video.youtube_url }}', '{{ student_course.id }}', '{{ video.id }}')">
+                  <div class="relative">
+                    <div class="video-thumbnail">
+                      <img src="https://img.youtube.com/vi/{{ video_id }}/maxresdefault.jpg" 
+                           alt="{{ video.title }}" 
+                           onerror="this.onerror=null; this.src='https://img.youtube.com/vi/{{ video_id }}/hqdefault.jpg'"
+                           loading="lazy">
+                      
+                      <div class="play-overlay">
+                        <div class="bg-white/20 rounded-full p-4 backdrop-blur-sm">
+                          <span class="text-white text-2xl">▶️</span>
+                        </div>
+                      </div>
+                      
+                      <div class="video-number">{{ forloop.counter }}</div>
+                      
+                      <!-- Progress bar for watched videos -->
+                      {% if video.id in watched_videos %}
+                      <div class="video-progress-bar">
+                        <div class="video-progress-fill" style="width: 100%"></div>
+                      </div>
+                      {% endif %}
+                      
+                      <!-- Watched overlay -->
+                      {% if video.id in watched_videos %}
+                      <div class="watched-overlay">
+                        <div class="watched-badge">
+                          <span class="text-lg mr-1">✅</span>
+                          Watched
+                        </div>
+                      </div>
+                      {% endif %}
+                    </div>
+                  </div>
+                  
+                  <div class="p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2">{{ video.title }}</h3>
+                    
+                    <div class="flex justify-between items-center">
+                      <div class="text-sm text-gray-500">
+                        <span class="text-lg mr-1">▶️</span>
+                        Click to watch
+                      </div>
+                      
+                      {% if video.id in watched_videos %}
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <span class="text-lg mr-1">✅</span> Watched
+                      </span>
+                      {% else %}
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        Not watched
+                      </span>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+                {% endwith %}
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-10">
+              <div class="w-16 h-16 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="text-2xl">🎥</span>
+              </div>
+              <h3 class="text-lg font-medium text-gray-900 mb-2">No videos available</h3>
+              <p class="text-gray-500">There are no videos for this course yet.</p>
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Course Quizzes - FIXED VERSION -->
+          <div class="course-card bg-white p-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between mb-6">
+              <h2 class="text-2xl font-bold text-gray-900 mb-4 md:mb-0">Course Quizzes</h2>
+              <div class="flex items-center space-x-4">
+                <span class="text-gray-500 text-sm">{{ quizzes|length }} quiz{{ quizzes|pluralize:"zes" }}</span>
+                <div class="bg-gray-50 rounded-lg px-3 py-2">
+                  <select id="quizFilter" class="bg-transparent border-none text-sm text-gray-700 focus:outline-none focus:ring-0">
+                    <option value="all">All Quizzes</option>
+                    <option value="available">Available</option>
+                    <option value="completed">Completed</option>
+                    <option value="expired">Expired</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            {% if quizzes %}
+            <div class="space-y-6" id="quizzesContainer">
+              {% for quiz in quizzes %}
+                {% for key, value in quiz_attempts.items %}
+                  {% if key == quiz.id %}
+                    {% with attempt=value %}
+                    <!-- Safe Quiz Status Determination -->
+                    {% if attempt %}
+                      <!-- Quiz has been attempted -->
+                      {% if attempt.score >= quiz.passing_score %}
+                        <!-- PASSED -->
+                        <div class="quiz-card bg-white border border-gray-200 rounded-xl p-6 passed">
+                          <div class="quiz-status-badge bg-green-100 text-green-800">
+                            <span class="text-lg mr-1">✅</span>
+                            <span>Passed</span>
+                          </div>
+                    {% else %}
+                        <!-- FAILED -->
+                        <div class="quiz-card bg-white border border-gray-200 rounded-xl p-6 failed">
+                          <div class="quiz-status-badge bg-red-100 text-red-800">
+                            <span class="text-lg mr-1">❌</span>
+                            <span>Failed</span>
+                          </div>
+                    {% endif %}
+                    {% else %}
+                      <!-- Quiz not attempted yet -->
+                      {% if quiz.due_date and quiz.due_date < current_time %}
+                        <!-- EXPIRED -->
+                        <div class="quiz-card bg-white border border-gray-200 rounded-xl p-6 expired">
+                          <div class="quiz-status-badge bg-gray-100 text-gray-800">
+                            <span class="text-lg mr-1">⏰</span>
+                            <span>Expired</span>
+                          </div>
+                      {% else %}
+                        <!-- AVAILABLE -->
+                        <div class="quiz-card bg-white border border-gray-200 rounded-xl p-6 available">
+                          <div class="quiz-status-badge bg-blue-100 text-blue-800">
+                            <span class="text-lg mr-1">📝</span>
+                            <span>Available</span>
+                          </div>
+                      {% endif %}
+                    {% endif %}
+                      
+                      <div class="quiz-card-content">
+                        <!-- Quiz Header -->
+                        <div class="quiz-card-header">
+                          <div class="flex-1">
+                            <h3 class="quiz-card-title">{{ quiz.title }}</h3>
+                            <p class="quiz-card-description">{{ quiz.description|default:"Test your knowledge with this quiz." }}</p>
+                          </div>
+                        </div>
+                        
+                        <!-- Quiz Details -->
+                        <div class="quiz-details-grid">
+                          <div class="quiz-detail-item">
+                            <span class="text-lg">⏱️</span>
+                            <span>{{ quiz.time_limit }} minutes</span>
+                          </div>
+                          <div class="quiz-detail-item">
+                            <span class="text-lg">📊</span>
+                            <span>Passing: {{ quiz.passing_score }}%</span>
+                          </div>
+                          <div class="quiz-detail-item">
+                            <span class="text-lg">📅</span>
+                            <span>Due: {{ quiz.due_date|date:"M d, Y" }}</span>
+                          </div>
+                          <div class="quiz-detail-item">
+                            <span class="text-lg">❓</span>
+                            <span>{{ quiz.questions.count }} questions</span>
+                          </div>
+                        </div>
+                        
+                        <!-- Quiz Score Display (if attempted) -->
+                        {% if attempt %}
+                        <div class="quiz-score-display">
+                          <div class="quiz-score-value {% if attempt.score >= quiz.passing_score %}quiz-score-passed{% else %}quiz-score-failed{% endif %}">
+                            {{ attempt.score|floatformat:1 }}%
+                          </div>
+                          <div class="quiz-score-label">
+                            {% if attempt.score >= quiz.passing_score %}
+                              You passed this quiz!
+                            {% else %}
+                              Score below passing threshold
+                            {% endif %}
+                          </div>
+                        </div>
+                        
+                        <div class="quiz-completion-date">
+                          Completed on {{ attempt.completed_at|date:"M d, Y" }}
+                        </div>
+                        {% endif %}
+                      </div>
+                      
+                      <!-- Quiz Footer with Actions -->
+                      <div class="quiz-card-footer">
+                        <div>
+                          {% if attempt %}
+                            <a href="{% url 'quiz_result' quiz.id %}" class="quiz-action-btn primary">
+                              <span class="text-lg mr-1">👁️</span>
+                              View Result
+                            </a>
+                            
+                            {% if attempt.score < quiz.passing_score and quiz.due_date >= current_time %}
+                              <a href="{% url 'take_quiz' quiz.id %}" class="quiz-action-btn secondary ml-3">
+                                <span class="text-lg mr-1">🔄</span>
+                                Retake Quiz
+                              </a>
+                            {% endif %}
+                          {% else %}
+                            {% if quiz.due_date >= current_time %}
+                              <a href="{% url 'take_quiz' quiz.id %}" class="quiz-action-btn primary">
+                                <span class="text-lg mr-1">🚀</span>
+                                Start Quiz
+                              </a>
+                            {% else %}
+                              <span class="quiz-action-btn disabled">
+                                <span class="text-lg mr-1">🔒</span>
+                                Quiz Expired
+                              </span>
+                            {% endif %}
+                          {% endif %}
+                        </div>
+                        
+                        <!-- Quiz Progress Ring (if attempted) -->
+                        {% if attempt %}
+                        <div class="quiz-progress-ring relative">
+                          <svg class="w-full h-full" viewBox="0 0 36 36">
+                            <path class="text-gray-200 stroke-current"
+                              stroke-width="3"
+                              fill="none"
+                              d="M18 2.0845
+                                a 15.9155 15.9155 0 0 1 0 31.831
+                                a 15.9155 15.9155 0 0 1 0 -31.831"
+                            />
+                            <path class="{% if attempt.score >= quiz.passing_score %}text-green-500{% else %}text-red-500{% endif %} stroke-current"
+                              stroke-width="3"
+                              stroke-dasharray="{{ attempt.score }}, 100"
+                              stroke-linecap="round"
+                              fill="none"
+                              d="M18 2.0845
+                                a 15.9155 15.9155 0 0 1 0 31.831
+                                a 15.9155 15.9155 0 0 1 0 -31.831"
+                            />
+                            <text x="18" y="20.5" class="text-[6px] font-semibold {% if attempt.score >= quiz.passing_score %}text-green-700{% else %}text-red-700{% endif %}" text-anchor="middle" dominant-baseline="middle">{{ attempt.score|floatformat:0 }}%</text>
+                          </svg>
+                        </div>
+                        {% endif %}
+                      </div>
+                    </div>
+                    {% endwith %}
+                  {% endif %}
+                {% endfor %}
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-10">
+              <div class="w-16 h-16 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="text-2xl">📝</span>
+              </div>
+              <h3 class="text-lg font-medium text-gray-900 mb-2">No quizzes available</h3>
+              <p class="text-gray-500">There are no quizzes for this course yet.</p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="lg:col-span-1">
+          <!-- Course Info Card -->
+          <div class="course-card bg-white p-6 mb-6">
+            <h3 class="text-xl font-semibold text-gray-900 mb-4">Course Details</h3>
+            
+            <div class="space-y-4">
+              <div class="flex items-center">
+                <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center mr-3">
+                  <span class="text-lg">⏱️</span>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500">Duration</p>
+                  <p class="font-medium text-gray-800">{{ course.duration_weeks }} weeks</p>
+                </div>
+              </div>
+              
+              <div class="flex items-center">
+                <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center mr-3">
+                  <span class="text-lg">🎥</span>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500">Videos</p>
+                  <p class="font-medium text-gray-800">{{ videos|length }} lessons</p>
+                </div>
+              </div>
+              
+              <div class="flex items-center">
+                <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center mr-3">
+                  <span class="text-lg">📝</span>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500">Quizzes</p>
+                  <p class="font-medium text-gray-800">{{ quizzes|length }} assessments</p>
+                </div>
+              </div>
+              
+              <div class="flex items-center">
+                <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center mr-3">
+                  <span class="text-lg">📊</span>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500">Difficulty</p>
+                  <p class="font-medium text-gray-800">{{ course.difficulty|default:"Beginner" }}</p>
+                </div>
+              </div>
+              
+              <div class="flex items-center">
+                <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center mr-3">
+                  <span class="text-lg">📅</span>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500">Last Updated</p>
+                  <p class="font-medium text-gray-800">{{ course.updated_at|date:"M d, Y"|default:"Recently" }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Learning Resources -->
+          <div class="course-card bg-white p-6">
+            <h3 class="text-xl font-semibold text-gray-900 mb-4">Learning Resources</h3>
+            
+            <div class="space-y-3">
+              <a href="#" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mr-3">
+                  <span class="text-lg">📄</span>
+                </div>
+                <div>
+                  <p class="font-medium text-gray-800">Course Notes</p>
+                  <p class="text-sm text-gray-500">Download PDF materials</p>
+                </div>
+              </a>
+              
+              <a href="#" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div class="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center mr-3">
+                  <span class="text-lg">💪</span>
+                </div>
+                <div>
+                  <p class="font-medium text-gray-800">Practice Exercises</p>
+                  <p class="text-sm text-gray-500">Test your knowledge</p>
+                </div>
+              </a>
+              
+              <a href="#" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div class="w-10 h-10 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center mr-3">
+                  <span class="text-lg">💬</span>
+                </div>
+                <div>
+                  <p class="font-medium text-gray-800">Discussion Forum</p>
+                  <p class="text-sm text-gray-500">Ask questions & share</p>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Video Modal -->
+<div id="videoModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+  <div class="bg-black rounded-2xl shadow-lg relative w-full max-w-4xl mx-4">
+    <button onclick="closeVideoModal()" class="absolute -top-12 right-0 text-white text-2xl font-bold hover:text-gray-300 transition-colors z-10">
+      <span class="text-2xl">✕</span>
+    </button>
+    <div class="aspect-w-16 aspect-h-9 w-full">
+      <iframe id="videoFrame" class="w-full h-96 md:h-[500px] rounded-2xl" src="" frameborder="0" 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+              allowfullscreen></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+  // UI interaction functions
+  function toggleDropdown() {
+    document.getElementById("profileDropdown").classList.toggle("hidden");
+  }
+  
+  function toggleMobileMenu() {
+    document.getElementById("sidebar").classList.toggle("open");
+  }
+  
+  // Close dropdown when clicking outside
+  window.onclick = function(event) {
+    if (!event.target.matches('.profile-button') && !event.target.closest('.profile-button')) {
+      const dropdown = document.getElementById("profileDropdown");
+      if (!dropdown.classList.contains('hidden')) {
+        dropdown.classList.add('hidden');
+      }
+    }
+  }
+
+  // YouTube ID extraction
+  function extractYouTubeId(url) {
+    if (!url) return null;
+    
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?#]+)/,
+      /youtube\.com\/v\/([^&?#]+)/,
+      /youtube\.com\/watch\?.+&v=([^&?#]+)/
+    ];
+    
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+    
+    return null;
+  }
+
+  function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+          const cookies = document.cookie.split(';');
+          for (let i = 0; i < cookies.length; i++) {
+              const cookie = cookies[i].trim();
+              if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                  cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                  break;
+              }
+          }
+      }
+      return cookieValue;
+  }
+
+  // Enhanced openVideoModal function
+  function openVideoModal(url, studentCourseId, videoId){
+      const modal = document.getElementById('videoModal');
+      const iframe = document.getElementById('videoFrame');
+      
+      const videoIdOnly = extractYouTubeId(url);
+      if (videoIdOnly) {
+        iframe.src = `https://www.youtube.com/embed/${videoIdOnly}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
+        modal.classList.remove('hidden');
+        
+        // Mark video as watched
+        markVideoAsWatched(studentCourseId, videoId);
+      } else {
+        console.error('Invalid YouTube URL:', url);
+        showToast('Error: Invalid YouTube URL', 'error');
+      }
+  }
+
+  // Separate function to mark video as watched
+  function markVideoAsWatched(studentCourseId, videoId) {
+      fetch(`/student/course/${studentCourseId}/video/${videoId}/watched/`, {
+          method: 'POST',
+          headers: { 
+              'X-CSRFToken': getCookie('csrftoken'),
+              'X-Requested-With': 'XMLHttpRequest'
+          }
+      })
+      .then(res => res.json())
+      .then(data => { 
+          if(data.success) {
+              updateVideoUI(videoId);
+              showToast('Video marked as watched!', 'success');
+          } else {
+              showToast('Failed to mark video as watched', 'error');
+          }
+      })
+      .catch(error => {
+          console.error('Error:', error);
+          showToast('An error occurred', 'error');
+      });
+  }
+
+  // Function to update video UI
+  function updateVideoUI(videoId) {
+      const videoElement = document.querySelector(`[onclick*="${videoId}"]`);
+      if (videoElement) {
+          // Update classes
+          videoElement.classList.remove('unwatched');
+          videoElement.classList.add('watched');
+          
+          // Update status badge
+          const statusBadge = videoElement.querySelector('.inline-flex');
+          if (statusBadge) {
+              statusBadge.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800';
+              statusBadge.innerHTML = '<span class="text-lg mr-1">✅</span> Watched';
+          }
+          
+          // Add progress bar if not exists
+          let progressBar = videoElement.querySelector('.video-progress-bar');
+          if (!progressBar) {
+              progressBar = document.createElement('div');
+              progressBar.className = 'video-progress-bar';
+              progressBar.innerHTML = '<div class="video-progress-fill" style="width: 100%"></div>';
+              videoElement.querySelector('.video-thumbnail').appendChild(progressBar);
+          }
+          
+          // Add watched overlay if not exists
+          let watchedOverlay = videoElement.querySelector('.watched-overlay');
+          if (!watchedOverlay) {
+              watchedOverlay = document.createElement('div');
+              watchedOverlay.className = 'watched-overlay';
+              watchedOverlay.innerHTML = '<div class="watched-badge"><span class="text-lg mr-1">✅</span>Watched</div>';
+              videoElement.querySelector('.video-thumbnail').appendChild(watchedOverlay);
+          }
+      }
+  }
+
+  // Toast notification function
+  function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white font-medium transition-all duration-300 ${
+          type === 'success' ? 'bg-green-500' : 
+          type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+      }`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateY(-10px)';
+          setTimeout(() => {
+              toast.remove();
+          }, 300);
+      }, 3000);
+  }
+
+  function closeVideoModal(){
+    const modal = document.getElementById('videoModal');
+    const iframe = document.getElementById('videoFrame');
+    // Stop the video
+    iframe.src = "";
+    modal.classList.add('hidden');
+  }
+
+  // Close modal when clicking on backdrop
+  document.getElementById('videoModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeVideoModal();
+    }
+  });
+
+  // SweetAlert for marking course complete
+  const form = document.getElementById('completeCourseForm');
+  if(form){
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      Swal.fire({
+        title: 'Complete this course?',
+        text: "This will mark the course as completed in your profile!",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, complete it!',
+        cancelButtonText: 'Not yet'
+      }).then((result) => { if(result.isConfirmed) form.submit(); });
+    });
+  }
+
+  // Escape key to close modal
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeVideoModal();
+    }
+  });
+
+  // Video filter functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const videoFilter = document.getElementById('videoFilter');
+    if (videoFilter) {
+      videoFilter.addEventListener('change', function() {
+        const filterValue = this.value;
+        const videoCards = document.querySelectorAll('.video-card');
+        
+        videoCards.forEach(card => {
+          if (filterValue === 'all') {
+            card.style.display = 'block';
+          } else if (filterValue === 'watched') {
+            card.style.display = card.classList.contains('watched') ? 'block' : 'none';
+          } else if (filterValue === 'unwatched') {
+            card.style.display = card.classList.contains('unwatched') ? 'block' : 'none';
+          }
+        });
+      });
+    }
+    
+    // Quiz filter functionality
+    const quizFilter = document.getElementById('quizFilter');
+    if (quizFilter) {
+      quizFilter.addEventListener('change', function() {
+        const filterValue = this.value;
+        const quizCards = document.querySelectorAll('.quiz-card');
+        
+        quizCards.forEach(card => {
+          if (filterValue === 'all') {
+            card.style.display = 'block';
+          } else if (filterValue === 'available') {
+            card.style.display = card.classList.contains('available') ? 'block' : 'none';
+          } else if (filterValue === 'completed') {
+            card.style.display = (card.classList.contains('passed') || card.classList.contains('failed')) ? 'block' : 'none';
+          } else if (filterValue === 'expired') {
+            card.style.display = card.classList.contains('expired') ? 'block' : 'none';
+          }
+        });
+      });
+    }
+  });
+</script>
+</body>
+</html>

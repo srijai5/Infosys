@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Study Sessions</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    // Toggle profile dropdown
+    function toggleDropdown() {
+      const dropdown = document.getElementById("profileDropdown");
+      dropdown.classList.toggle("hidden");
+    }
+  </script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+<div class="flex min-h-screen">
+
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white shadow-md">
+    <div class="p-6">
+      <h2 class="text-xl font-bold text-gray-800 mb-6">StudyPortal</h2>
+      <nav class="space-y-4">
+        <a href="{% url 'student_dashboard' %}" class="block px-4 py-2 rounded-lg hover:bg-gray-100">Dashboard</a>
+        <a href="{% url 'study_sessions' %}" class="block px-4 py-2 rounded-lg bg-blue-100 text-blue-700 font-medium">Study Sessions</a>
+        <a href="{% url 'quiz_list' %}" class="block px-4 py-2 rounded-lg hover:bg-gray-100">Quizzes</a>
+        <a href="{% url 'performance' %}" class="block px-4 py-2 rounded-lg hover:bg-gray-100">Performance</a>
+        <a href="{% url 'recommendations' %}" class="block px-4 py-2 rounded-lg hover:bg-gray-100">Recommendations</a>
+        <a href="{% url 'settings' %}" class="block px-4 py-2 rounded-lg hover:bg-gray-100">Settings</a>
+      </nav>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="flex-1 p-6">
+
+    <!-- Header (exact same as student_dashboard.html) -->
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="text-3xl font-bold text-gray-900">Your Study Sessions 📚</h1>
+      <div class="relative">
+        <button onclick="toggleDropdown()" class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+          {{ user.username|first|upper }}
+        </button>
+        <div id="profileDropdown" class="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg hidden">
+          <div class="px-4 py-2 text-gray-800 border-b">
+            <p class="font-semibold">{{ user.username }}</p>
+          </div>
+          <form method="post" action="{% url 'student_logout' %}" class="px-4 py-2">
+            {% csrf_token %}
+            <button type="submit" class="w-full text-left text-red-600 hover:text-red-800">Logout</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Study Sessions Section -->
+    <div class="bg-white rounded-xl p-6 shadow">
+      <h2 class="text-2xl font-semibold text-gray-900 mb-4">Your Study Sessions</h2>
+      <div class="space-y-4">
+        {% if sessions %}
+          {% for session in sessions %}
+            <div class="p-4 bg-gray-50 rounded-lg flex justify-between items-center">
+              <div>
+                <h3 class="font-medium text-gray-900">
+                  {{ session.start_time|date:"M d, Y" }}
+                </h3>
+                <p class="text-sm text-gray-600">
+                  {{ session.start_time|time:"H:i" }} - {{ session.end_time|time:"H:i" }}
+                </p>
+              </div>
+              <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+                Completed
+              </span>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-gray-600">No study sessions recorded yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  lucide.createIcons();
+</script>
+</body>
+</html>

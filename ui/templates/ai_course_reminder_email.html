@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; text-align: center; }
+        .content { padding: 25px; background: #f9f9f9; }
+        .progress-bar { background: #ddd; border-radius: 10px; margin: 15px 0; height: 24px; overflow: hidden; }
+        .progress { background: linear-gradient(90deg, #4CAF50, #45a049); color: white; padding: 5px; text-align: center; font-weight: bold; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .ai-insight { background: #e8f4fd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2196F3; }
+        .quiz-alert { background: #fff3cd; padding: 18px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #ffc107; }
+        .completion-alert { background: #d4edda; padding: 18px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #28a745; }
+        .button { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; border-top: 1px solid #ddd; margin-top: 20px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+        .stat-card { background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .ai-badge { background: #2196F3; color: white; padding: 4px 8px; border-radius: 12px; font-size: 10px; margin-left: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 {{ time_greeting }} - AI Learning Assistant</h1>
+            <p>Personalized reminders to boost your learning journey</p>
+        </div>
+        
+        <div class="content">
+            <h2>Hello {{ student_name }},</h2>
+            
+            <!-- AI Personalized Message -->
+            <div class="ai-insight">
+                <h3>💡 AI Insight <span class="ai-badge">SMART</span></h3>
+                <p><strong>{{ ai_message }}</strong></p>
+                <p><em>{{ ai_recommendation }}</em></p>
+            </div>
+
+            <h3>Your Progress in "{{ course_name }}":</h3>
+            <div class="progress-bar">
+                <div class="progress" style="width: {{ progress_percentage }}%">
+                    {{ progress_percentage }}% Complete
+                </div>
+            </div>
+
+            <!-- Learning Statistics -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>📊 Progress</h4>
+                    <p style="font-size: 24px; margin: 5px 0; color: #4CAF50;">{{ progress_percentage }}%</p>
+                    <small>Course Completion</small>
+                </div>
+                <div class="stat-card">
+                    <h4>🎯 Milestone</h4>
+                    <p style="font-size: 24px; margin: 5px 0; color: #2196F3;">{{ watched_videos }}/{{ total_videos }}</p>
+                    <small>Videos Completed</small>
+                </div>
+            </div>
+
+            <!-- Task 2: Quiz Reminders -->
+            {% if has_quizzes %}
+            <div class="quiz-alert">
+                <h4>📝 Pending Quizzes Detected <span class="ai-badge">NEW</span></h4>
+                <p>You have quizzes waiting for your attention:</p>
+                <ul>
+                    {% for quiz in pending_quizzes %}
+                    <li><strong>{{ quiz.title }}</strong> - {{ quiz.course.course_name }}</li>
+                    {% endfor %}
+                </ul>
+                <p><small>💡 <em>Quizzes help reinforce your learning and track progress</em></small></p>
+            </div>
+            {% endif %}
+
+            <!-- Task 3: High Completion Alerts -->
+            {% if has_high_completion %}
+            <div class="completion-alert">
+                <h4>🚀 Amazing Progress! <span class="ai-badge">ALMOST THERE</span></h4>
+                <p>You're excelling in these courses:</p>
+                <ul>
+                    {% for course in high_completion_courses %}
+                    <li><strong>{{ course.course_name }}</strong> - {{ course.course_progress }}% complete</li>
+                    {% endfor %}
+                </ul>
+                <p><small>⭐ <em>You're in the final stretch! Keep up the great work!</em></small></p>
+            </div>
+            {% endif %}
+
+            <!-- Call to Action -->
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{ course_url }}" class="button">
+                    {% if progress_percentage >= 75 %}
+                    🏆 Finish Strong - Complete Course
+                    {% elif progress_percentage >= 50 %}
+                    💪 Continue Learning Journey
+                    {% else %}
+                    🚀 Start Learning Session
+                    {% endif %}
+                </a>
+            </div>
+
+            <!-- AI Learning Tip -->
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <h4>🎯 AI Learning Tip</h4>
+                <p><small>
+                    {% if progress_percentage < 30 %}
+                    <strong>Foundation Building:</strong> Focus on understanding core concepts thoroughly before moving to advanced topics.
+                    {% elif progress_percentage < 70 %}
+                    <strong>Practice Phase:</strong> Apply what you've learned through exercises and real-world examples.
+                    {% else %}
+                    <strong>Mastery Stage:</strong> Review key concepts and prepare for advanced applications of your knowledge.
+                    {% endif %}
+                </small></p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Powered by AI Learning Assistant 🤖</p>
+            <p>Happy Learning!<br>The Learning Platform Team</p>
+            <p><small>You're receiving this email because you're enrolled in our courses.<br>
+            <a href="{{ settings.SITE_URL }}/preferences">Manage your notification preferences</a></small></p>
+        </div>
+    </div>
+</body>
+</html>

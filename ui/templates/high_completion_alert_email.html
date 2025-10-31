@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #4CAF50, #45a049); color: white; padding: 30px; text-align: center; }
+        .content { padding: 25px; background: #f9f9f9; }
+        .celebration { background: #d4edda; padding: 25px; border-radius: 10px; margin: 20px 0; text-align: center; }
+        .button { background: linear-gradient(135deg, #4CAF50, #45a049); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; font-size: 16px; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎉 {{ time_greeting }} - Course Milestone!</h1>
+            <p>You're achieving amazing learning goals!</p>
+        </div>
+        
+        <div class="content">
+            <h2>Hello {{ student_name }},</h2>
+            
+            <div class="celebration">
+                <h3 style="margin: 0; font-size: 24px;">{{ celebration_message }}</h3>
+                <p style="font-size: 18px; margin: 10px 0;">You've completed <strong>{{ progress }}%</strong> of</p>
+                <h4 style="margin: 15px 0; color: #2e7d32;">"{{ course_name }}"</h4>
+                <p style="font-size: 16px;">Only <strong>{{ remaining }}%</strong> to go!</p>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <p>You're in the final stretch! This is where all your hard work pays off.</p>
+                <a href="{{ course_url }}" class="button">
+                    🏆 Complete Your Journey
+                </a>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                <h4>🌟 You're So Close!</h4>
+                <p>Completing this course will:</p>
+                <ul>
+                    <li>Add a valuable skill to your portfolio</li>
+                    <li>Boost your confidence in this subject</li>
+                    <li>Open doors to advanced topics</li>
+                    <li>Showcase your dedication to learning</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Powered by AI Learning Assistant 🤖</p>
+            <p>Celebrating your learning journey!<br>The Learning Platform Team</p>
+        </div>
+    </div>
+</body>
+</html>

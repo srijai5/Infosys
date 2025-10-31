@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #4CAF50; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background: #f9f9f9; }
+        .progress-bar { background: #ddd; border-radius: 5px; margin: 10px 0; }
+        .progress { background: #4CAF50; color: white; padding: 5px; border-radius: 5px; text-align: center; }
+        .button { background: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 Course Reminder</h1>
+        </div>
+        <div class="content">
+            <h2>Hello {{ student_name }},</h2>
+            <p>This is a friendly reminder to continue your learning journey!</p>
+            <h3>Your Progress in "{{ course_name }}":</h3>
+            <div class="progress-bar">
+                <div class="progress" style="width: {{ progress_percentage }}%">
+                    {{ progress_percentage }}% Complete
+                </div>
+            </div>
+            
+            <p><strong>{{ watched_videos }}/{{ total_videos }}</strong> videos completed</p>
+            
+            {% if has_pending_quiz %}
+            <div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                <h4>📝 Quiz Available!</h4>
+                <p>You have a pending quiz for this course. Don't forget to attempt it!</p>
+            </div>
+            {% endif %}
+            
+            {% if needs_high_completion_alert %}
+            <div style="background: #d4edda; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                <h4>🎉 Almost There!</h4>
+                <p>You're doing great! You've completed {{ progress_percentage }}% of the course. Keep up the momentum!</p>
+            </div>
+            {% endif %}
+            
+            <p>
+                <a href="{{ course_url }}" class="button">Continue Learning</a>
+            </p>
+        </div>
+        <div class="footer">
+            <p>Happy Learning!<br>The Learning Platform Team</p>
+            <p><small>You're receiving this email because you're enrolled in our courses.</small></p>
+        </div>
+    </div>
+</body>
+</html>

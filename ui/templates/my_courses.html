@@ -1,0 +1,399 @@
+{% load static %}
+{% load youtube_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Courses | StudyPortal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    body { 
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+    }
+    
+    .sidebar-link { 
+      display: flex; 
+      align-items: center; 
+      padding: 0.75rem 1rem; 
+      border-radius: 0.5rem; 
+      transition: all 0.2s ease-in-out;
+      margin-bottom: 0.25rem;
+    }
+    
+    .sidebar-link:hover { 
+      background-color: rgba(79, 70, 229, 0.08); 
+      color: #4F46E5; 
+    }
+    
+    .sidebar-active { 
+      background-color: rgba(79, 70, 229, 0.12); 
+      color: #4F46E5; 
+      font-weight: 600;
+      position: relative;
+    }
+    
+    .sidebar-active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 4px;
+      background-color: #4F46E5;
+      border-radius: 0 4px 4px 0;
+    }
+    
+    .course-card { 
+      transition: all 0.3s ease; 
+      border-radius: 12px;
+      overflow: hidden;
+      height: 100%;
+    }
+    
+    .course-card:hover { 
+      transform: translateY(-6px); 
+      box-shadow: 0 12px 28px rgba(0,0,0,0.12); 
+    }
+    
+    .gradient-sidebar {
+      background: linear-gradient(180deg, #4F46E5 0%, #7C73E6 100%);
+    }
+    
+    .course-progress-ring {
+      width: 60px;
+      height: 60px;
+    }
+
+    /* Fallback icon styles */
+    .icon-fallback {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      margin-right: 12px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+      }
+      
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      
+      .main-content {
+        margin-left: 0 !important;
+      }
+      
+      .mobile-menu-btn {
+        display: block;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+
+<div class="flex min-h-screen">
+  <!-- Mobile Menu Button -->
+  <button class="mobile-menu-btn fixed top-4 left-4 z-20 bg-indigo-600 text-white p-2 rounded-lg md:hidden" onclick="toggleMobileMenu()">
+    <span class="icon-fallback">☰</span>
+  </button>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar fixed inset-y-0 left-0 w-64 gradient-sidebar text-white shadow-xl z-10 md:translate-x-0">
+    <div class="flex flex-col h-full">
+      <div class="px-6 py-5 border-b border-indigo-500/30">
+        <div class="flex items-center">
+          <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center mr-3">
+            <span class="text-indigo-600 font-bold text-xl">🎓</span>
+          </div>
+          <h1 class="text-xl font-bold text-white">StudyPortal</h1>
+        </div>
+      </div>
+      
+      <nav class="flex-1 px-4 py-6 space-y-1">
+        <a href="{% url 'student_dashboard' %}" class="sidebar-link text-indigo-100 hover:text-white">
+          <span class="icon-fallback">📊</span> Dashboard
+        </a>
+        <a href="{% url 'my_courses' %}" class="sidebar-link sidebar-active text-white">
+          <span class="icon-fallback">🎓</span> My Courses
+        </a>
+        <a href="{% url 'student_quizzes' %}" class="sidebar-link text-indigo-100 hover:text-white">
+          <span class="icon-fallback">📝</span> Quizzes
+        </a>
+        <a href="{% url 'performance' %}" class="sidebar-link text-indigo-100 hover:text-white">
+          <span class="icon-fallback">📈</span> Performance
+        </a>
+        
+        <a href="{% url 'settings' %}" class="sidebar-link text-indigo-100 hover:text-white">
+          <span class="icon-fallback">⚙️</span> Settings
+        </a>
+      </nav>
+      
+      <div class="p-4 border-t border-indigo-500/30">
+        <div class="flex items-center mb-4 px-2">
+          <div class="w-10 h-10 rounded-full bg-indigo-400 flex items-center justify-center text-white font-bold mr-3">
+            {{ user.username|first|upper }}
+          </div>
+          <div>
+            <p class="text-white font-medium text-sm">{{ user.username }}</p>
+            <p class="text-indigo-200 text-xs">Student</p>
+          </div>
+        </div>
+        
+        <form method="post" action="{% url 'student_logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="logout-btn flex items-center w-full text-indigo-200 hover:text-white py-2 px-2 rounded-lg hover:bg-indigo-500/20 transition-colors">
+            <span class="icon-fallback">🚪</span> Logout
+          </button>
+        </form>
+      </div>
+    </div>
+  </aside>
+      
+  <!-- Main Content -->
+  <div class="main-content flex-1 md:ml-64 p-6">
+    <!-- Header -->
+    <header class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">My Courses</h1>
+        <p class="text-gray-500 mt-1">Your enrolled courses and learning progress</p>
+      </div>
+      
+      <div class="flex items-center space-x-4">
+        <div class="relative">
+          <button onclick="toggleDropdown()" class="profile-button flex items-center space-x-2 bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm hover:shadow transition-all">
+            <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
+              {{ user.username|first|upper }}
+            </div>
+            <span class="text-gray-700 font-medium hidden sm:block">{{ user.username }}</span>
+            <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 0;">▼</span>
+          </button>
+          
+          <div id="profileDropdown" class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-10 hidden">
+            <div class="px-4 py-3 border-b border-gray-100">
+              <p class="font-semibold text-gray-900">{{ user.username }}</p>
+              <p class="text-sm text-gray-500">Student Account</p>
+            </div>
+            <div class="p-2">
+              <a href="{% url 'settings' %}" class="settings-menu-item flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                <span class="icon-fallback" style="margin-right: 8px;">⚙️</span> Settings
+              </a>
+            </div>
+            <div class="p-2 border-t border-gray-100">
+              <form method="post" action="{% url 'student_logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="flex items-center w-full px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                  <span class="icon-fallback" style="margin-right: 8px;">🚪</span> Logout
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Course Progress Section -->
+    <section class="mb-8">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">Your Course Progress</h2>
+      </div>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="coursesContainer">
+        {% for item in courses %}
+        <div class="course-card bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+          {% if item.sc.course.image %}
+            <div class="relative">
+              <img src="{{ item.sc.course.image.url }}" alt="{{ item.course.course_name }}" class="w-full h-40 object-cover">
+              <div class="absolute top-3 right-3">
+                {% if item.completed %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <span class="icon-fallback" style="width: 12px; height: 12px; margin-right: 4px;">✅</span>
+                    Completed
+                  </span>
+                {% elif item.progress_percent > 0 %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                    <span class="icon-fallback" style="width: 12px; height: 12px; margin-right: 4px;">⏱️</span>
+                    In Progress
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    <span class="icon-fallback" style="width: 12px; height: 12px; margin-right: 4px;">▶️</span>
+                    Not Started
+                  </span>
+                {% endif %}
+              </div>
+            </div>
+          {% else %}
+            <div class="w-full h-40 bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white">
+              <span class="icon-fallback" style="width: 40px; height: 40px;">📚</span>
+            </div>
+          {% endif %}
+
+          <div class="p-5 flex-1 flex flex-col">
+            <div class="flex justify-between items-start mb-3">
+              <h3 class="text-lg font-semibold text-gray-900">{{ item.sc.course.course_name }}</h3>
+              <div class="course-progress-ring relative">
+                <svg class="w-full h-full" viewBox="0 0 36 36">
+                  <path class="text-gray-200 stroke-current"
+                    stroke-width="3"
+                    fill="none"
+                    d="M18 2.0845
+                      a 15.9155 15.9155 0 0 1 0 31.831
+                      a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <path class="text-indigo-600 stroke-current"
+                    stroke-width="3"
+                    stroke-dasharray="{{ item.progress_percent|default:0 }}, 100"
+                    stroke-linecap="round"
+                    fill="none"
+                    d="M18 2.0845
+                      a 15.9155 15.9155 0 0 1 0 31.831
+                      a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <text x="18" y="20.5" class="text-[8px] font-semibold text-gray-700" text-anchor="middle" dominant-baseline="middle">{{ item.progress_percent|default:0 }}%</text>
+                </svg>
+              </div>
+            </div>
+            
+            <p class="text-gray-600 text-sm mb-4 flex-1">{{ item.sc.course.description|truncatechars:120 }}</p>
+
+            <!-- Progress Bar -->
+            <div class="mb-4">
+              <div class="flex justify-between text-xs text-gray-500 mb-1">
+                <span>Progress</span>
+                <span>{{ item.progress_percent|default:0 }}%</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-indigo-600 h-2 rounded-full" style="width: {{ item.progress_percent|default:0 }}%"></div>
+              </div>
+            </div>
+
+            <!-- Course Stats -->
+            <div class="mt-2">
+              <div class="flex items-center text-sm text-gray-600">
+                <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 8px; color: #9ca3af;">🎥</span>
+                <span>{{ item.watched_videos|default:0 }}/{{ item.total_videos|default:0 }} videos watched</span>
+              </div>
+              <div class="flex items-center text-sm text-gray-600 mt-1">
+                <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 8px; color: #9ca3af;">📅</span>
+                <span>Enrolled: {{ item.sc.enrolled_at|date:"M d, Y" }}</span>
+              </div>
+              {% if item.completed %}
+              <div class="flex items-center text-sm text-green-600 mt-1">
+                <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 8px;">✅</span>
+                <span>Completed: {{ item.sc.completed_at|date:"M d, Y"|default:"Recently" }}</span>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          
+          <div class="p-4 border-t border-gray-100">
+            {% if item.completed %}
+              <span class="inline-block w-full text-center bg-green-600 text-white py-2 rounded-lg font-semibold cursor-not-allowed">Completed</span>
+            {% else %}
+              <a href="{% url 'course_detail' course_id=item.sc.course.id %}" class="block w-full text-center bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                {% if item.progress_percent > 0 %}Continue Learning{% else %}Start Learning{% endif %}
+              </a>
+            {% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center py-12">
+          <span class="icon-fallback" style="width: 64px; height: 64px; color: #d1d5db; margin: 0 auto 16px;">📚</span>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">No courses enrolled yet</h3>
+          <p class="text-gray-500 mb-4">Start your learning journey by enrolling in courses</p>
+          <a href="{% url 'enroll_courses_list' %}" class="inline-block bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+            Browse Courses
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- High Progress Alert Section -->
+    {% for item in courses %}
+      {% if item.progress_percent >= 75 and item.progress_percent < 100 %}
+      <div class="mb-6">
+        <div class="bg-gradient-to-r from-green-50 to-emerald-100 border border-green-200 rounded-xl p-4">
+          <div class="flex items-center">
+            <div class="bg-green-100 p-2 rounded-lg mr-3">
+              <span class="icon-fallback" style="color: #059669;">🏆</span>
+            </div>
+            <div class="flex-1">
+              <h3 class="font-semibold text-green-800">You're almost there! 🎯</h3>
+              <p class="text-green-700 text-sm">You've completed {{ item.progress_percent }}% of "<strong>{{ item.sc.course.course_name }}</strong>". Just a little more to complete the course!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+  function initializeIcons() {
+    try {
+      if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+      } else {
+        showFallbackIcons();
+      }
+    } catch (error) {
+      showFallbackIcons();
+    }
+  }
+
+  function showFallbackIcons() {
+    const fallbackIcons = document.querySelectorAll('.icon-fallback');
+    fallbackIcons.forEach(icon => icon.style.display = 'inline-block');
+  }
+
+  function toggleDropdown() {
+    document.getElementById("profileDropdown").classList.toggle("hidden");
+  }
+  
+  function toggleMobileMenu() {
+    document.getElementById("sidebar").classList.toggle("open");
+  }
+  
+  window.onclick = function(event) {
+    if (!event.target.matches('.profile-button') && !event.target.closest('.profile-button')) {
+      const dropdown = document.getElementById("profileDropdown");
+      dropdown.classList.add("hidden");
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    initializeIcons();
+
+    const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.course-card').forEach(card => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(20px)';
+      card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+      observer.observe(card);
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #FF9800, #FF5722); color: white; padding: 25px; text-align: center; }
+        .content { padding: 25px; background: #f9f9f9; }
+        .progress-info { background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .button { background: linear-gradient(135deg, #FF9800, #FF5722); color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }
+        .motivation { background: #fff8e1; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 {{ time_greeting }} - Quiz Time!</h1>
+            <p>Test your knowledge and reinforce your learning</p>
+        </div>
+        
+        <div class="content">
+            <h2>Hello {{ student_name }},</h2>
+            
+            <div class="motivation">
+                <h3>💡 {{ quiz_motivation }}</h3>
+            </div>
+
+            <h3>Quiz: {{ quiz_title }}</h3>
+            <p>Course: <strong>{{ course_name }}</strong></p>
+            
+            <div class="progress-info">
+                <h4>📊 Your Course Progress</h4>
+                <p>You've completed <strong>{{ course_progress }}%</strong> of the course material</p>
+                <p><em>This quiz will help solidify what you've learned so far!</em></p>
+            </div>
+
+            <div style="text-align: center; margin: 25px 0;">
+                <a href="{{ quiz_url }}" class="button">
+                    🎯 Attempt Quiz Now
+                </a>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                <h4>💪 Why take this quiz?</h4>
+                <ul>
+                    <li>Reinforce your learning</li>
+                    <li>Identify areas for improvement</li>
+                    <li>Track your understanding</li>
+                    <li>Build confidence in the subject</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Powered by AI Learning Assistant 🤖</p>
+            <p><small>You're receiving this because you're enrolled in {{ course_name }}<br>
+            <a href="{{ settings.SITE_URL }}/preferences">Manage notifications</a></small></p>
+        </div>
+    </div>
+</body>
+</html>

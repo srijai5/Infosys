@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirm Delete | StudyPortal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="font-sans bg-gray-100 text-gray-800">
+
+<div class="flex min-h-screen">
+
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white shadow-md flex flex-col">
+    <div class="p-6 border-b">
+      <h2 class="text-2xl font-bold text-blue-600">StudyPortal</h2>
+      <p class="text-sm text-gray-500">Admin Control</p>
+    </div>
+    <nav class="flex-1 p-6 space-y-2">
+      <a href="{% url 'admin_dashboard' %}" class="block px-4 py-2 rounded-lg font-medium">Dashboard</a>
+      <a href="{% url 'admin_students' %}" class="block px-4 py-2 rounded-lg font-medium">Students</a>
+      <a href="{% url 'admin_courses' %}" class="block px-4 py-2 rounded-lg font-medium">Courses</a>
+      <a href="{% url 'admin_analytics' %}" class="block px-4 py-2 rounded-lg font-medium">Analytics</a>
+      <a href="{% url 'admin_settings' %}" class="block px-4 py-2 rounded-lg font-medium">Settings</a>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 p-8 flex items-center justify-center">
+
+    <div class="bg-white rounded-xl p-6 shadow w-full max-w-md text-center">
+      <h2 class="text-xl font-semibold mb-4">Confirm Delete</h2>
+      <p class="mb-6">Are you sure you want to delete <strong>{{ object.course_name }}</strong>?</p>
+      <form method="post" class="flex justify-center space-x-4">{% csrf_token %}
+        <a href="{% url 'admin_courses' %}" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Cancel</a>
+        <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Delete</button>
+      </form>
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>

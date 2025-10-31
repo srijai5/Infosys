@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quizzes | StudyPortal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    body { 
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+    }
+    
+    .sidebar-link { 
+      display: flex; 
+      align-items: center; 
+      padding: 0.75rem 1rem; 
+      border-radius: 0.5rem; 
+      transition: all 0.2s ease-in-out;
+      margin-bottom: 0.25rem;
+    }
+    
+    .sidebar-link:hover { 
+      background-color: rgba(79, 70, 229, 0.08); 
+      color: #4F46E5; 
+    }
+    
+    .sidebar-active { 
+      background-color: rgba(79, 70, 229, 0.12); 
+      color: #4F46E5; 
+      font-weight: 600;
+      position: relative;
+    }
+    
+    .sidebar-active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 4px;
+      background-color: #4F46E5;
+      border-radius: 0 4px 4px 0;
+    }
+    
+    .quiz-card { 
+      transition: all 0.3s ease; 
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    
+    .quiz-card:hover { 
+      transform: translateY(-4px); 
+      box-shadow: 0 12px 28px rgba(0,0,0,0.12); 
+    }
+    
+    .stats-card {
+      transition: all 0.2s ease;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    
+    .stats-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+    
+    .gradient-sidebar {
+      background: linear-gradient(180deg, #4F46E5 0%, #7C73E6 100%);
+    }
+
+    .pulse-warning {
+      animation: pulse 2s infinite;
+    }
+
+    /* Fallback icon styles */
+    .icon-fallback {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      margin-right: 12px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+      }
+      
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      
+      .main-content {
+        margin-left: 0 !important;
+      }
+      
+      .mobile-menu-btn {
+        display: block;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+
+<div class="flex min-h-screen">
+  <!-- Mobile Menu Button -->
+  <button class="mobile-menu-btn fixed top-4 left-4 z-20 bg-indigo-600 text-white p-2 rounded-lg md:hidden" onclick="toggleMobileMenu()">
+    <span class="icon-fallback">☰</span>
+  </button>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar fixed inset-y-0 left-0 w-64 gradient-sidebar text-white shadow-xl z-10 md:translate-x-0">
+    <div class="flex flex-col h-full">
+      <div class="px-6 py-5 border-b border-indigo-500/30">
+        <div class="flex items-center">
+          <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center mr-3">
+            <span class="text-indigo-600 font-bold text-xl">🎓</span>
+          </div>
+          <h1 class="text-xl font-bold text-white">StudyPortal</h1>
+        </div>
+      </div>
+      
+      <nav class="flex-1 px-4 py-6 space-y-1">
+        <a href="{% url 'student_dashboard' %}" class="sidebar-link text-indigo-100 hover:text-white">
+          <span class="icon-fallback">📊</span> Dashboard
+        </a>
+        <a href="{% url 'my_courses' %}" class="sidebar-link text-indigo-100 hover:text-white">
+          <span class="icon-fallback">🎓</span> My Courses
+        </a>
+        <a href="{% url 'student_quizzes' %}" class="sidebar-link sidebar-active text-white">
+          <span class="icon-fallback">📝</span> Quizzes
+        </a>
+        <a href="{% url 'performance' %}" class="sidebar-link text-indigo-100 hover:text-white">
+          <span class="icon-fallback">📈</span> Performance
+        </a>
+        
+        <a href="{% url 'settings' %}" class="sidebar-link text-indigo-100 hover:text-white">
+          <span class="icon-fallback">⚙️</span> Settings
+        </a>
+      </nav>
+      
+      <div class="p-4 border-t border-indigo-500/30">
+        <div class="flex items-center mb-4 px-2">
+          <div class="w-10 h-10 rounded-full bg-indigo-400 flex items-center justify-center text-white font-bold mr-3">
+            {{ user.username|first|upper }}
+          </div>
+          <div>
+            <p class="text-white font-medium text-sm">{{ user.username }}</p>
+            <p class="text-indigo-200 text-xs">Student</p>
+          </div>
+        </div>
+        
+        <form method="post" action="{% url 'student_logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="logout-btn flex items-center w-full text-indigo-200 hover:text-white py-2 px-2 rounded-lg hover:bg-indigo-500/20 transition-colors">
+            <span class="icon-fallback">🚪</span> Logout
+          </button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content flex-1 md:ml-64 p-6">
+    <!-- Header -->
+    <header class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Quizzes & Assessments</h1>
+        <p class="text-gray-500 mt-1">Test your knowledge and track your progress</p>
+      </div>
+      
+      <div class="flex items-center space-x-4">
+        <div class="relative">
+          <button onclick="toggleDropdown()" class="profile-button flex items-center space-x-2 bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm hover:shadow transition-all">
+            <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
+              {{ user.username|first|upper }}
+            </div>
+            <span class="text-gray-700 font-medium hidden sm:block">{{ user.username }}</span>
+            <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 0;">▼</span>
+          </button>
+          
+          <div id="profileDropdown" class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-10 hidden">
+            <div class="px-4 py-3 border-b border-gray-100">
+              <p class="font-semibold text-gray-900">{{ user.username }}</p>
+              <p class="text-sm text-gray-500">Student Account</p>
+            </div>
+            <div class="p-2">
+              <a href="{% url 'settings' %}" class="settings-menu-item flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                <span class="icon-fallback" style="margin-right: 8px;">⚙️</span> Settings
+              </a>
+            </div>
+            <div class="p-2 border-t border-gray-100">
+              <form method="post" action="{% url 'student_logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="flex items-center w-full px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                  <span class="icon-fallback" style="margin-right: 8px;">🚪</span> Logout
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Quick Stats -->
+    <section class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div class="stats-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
+        <div class="mr-4 p-3 rounded-lg bg-indigo-50 text-indigo-600">
+          <span class="icon-fallback">📝</span>
+        </div>
+        <div>
+          <p class="text-gray-500 text-sm">Total Quizzes</p>
+          <p class="text-2xl font-bold text-gray-900">{{ total_quizzes }}</p>
+        </div>
+      </div>
+      
+      <div class="stats-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
+        <div class="mr-4 p-3 rounded-lg bg-amber-50 text-amber-600">
+          <span class="icon-fallback">⏰</span>
+        </div>
+        <div>
+          <p class="text-gray-500 text-sm">Pending</p>
+          <p class="text-2xl font-bold text-gray-900">{{ total_pending_quizzes }}</p>
+        </div>
+      </div>
+      
+      <div class="stats-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
+        <div class="mr-4 p-3 rounded-lg bg-green-50 text-green-600">
+          <span class="icon-fallback">✅</span>
+        </div>
+        <div>
+          <p class="text-gray-500 text-sm">Completed</p>
+          <p class="text-2xl font-bold text-gray-900">{{ completed_quizzes }}</p>
+        </div>
+      </div>
+
+      <div class="stats-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
+        <div class="mr-4 p-3 rounded-lg bg-blue-50 text-blue-600">
+          <span class="icon-fallback">🎯</span>
+        </div>
+        <div>
+          <p class="text-gray-500 text-sm">Average Score</p>
+          <p class="text-2xl font-bold text-gray-900">{{ average_score|floatformat:1 }}%</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pending Quizzes Section -->
+    <section class="mb-8">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">Pending Quizzes</h2>
+        <div class="flex items-center space-x-2">
+          <span class="text-sm text-gray-500">Filter by:</span>
+          <select class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option>All Courses</option>
+            <option>Upcoming</option>
+            <option>Overdue</option>
+          </select>
+        </div>
+      </div>
+
+      {% if pending_quizzes %}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {% for quiz in pending_quizzes %}
+          <div class="quiz-card bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-6">
+              <div class="flex justify-between items-start mb-4">
+                <div class="flex-1">
+                  <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ quiz.title }}</h3>
+                  <div class="flex items-center text-sm text-gray-500 mb-3">
+                    <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 8px;">📚</span>
+                    <span>{{ quiz.course.course_name }}</span>
+                    <span class="mx-2">•</span>
+                    <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 8px;">⏱️</span>
+                    <span>{{ quiz.time_limit }} mins</span>
+                    <span class="mx-2">•</span>
+                    <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 8px;">❓</span>
+                    <span>{{ quiz.questions.count }} questions</span>
+                  </div>
+                </div>
+                {% if quiz.days_remaining < 3 %}
+                <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium">Urgent</span>
+                {% elif quiz.days_remaining < 7 %}
+                <span class="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded-full font-medium">Soon</span>
+                {% endif %}
+              </div>
+
+              <p class="text-gray-600 text-sm mb-4">{{ quiz.description|truncatechars:120 }}</p>
+
+              <div class="flex items-center justify-between">
+                <div class="flex items-center text-sm text-amber-600">
+                  <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 8px;">📅</span>
+                  <span>Due: {{ quiz.due_date|date:"M d, Y" }}</span>
+                </div>
+                <div class="flex space-x-2">
+                  {% if quiz.id %}
+                  <a href="{% url 'take_quiz' quiz.id %}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+                    Start Quiz
+                  </a>
+                  {% else %}
+                  <span class="bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium cursor-not-allowed">
+                    Start Quiz
+                  </span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
+          <span class="icon-fallback" style="width: 64px; height: 64px; color: #10b981; margin: 0 auto 16px;">✅</span>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">No pending quizzes</h3>
+          <p class="text-gray-500">You're all caught up! Great work!</p>
+        </div>
+      {% endif %}
+    </section>
+
+    <!-- Quiz History Section -->
+    <section class="mb-8">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">Quiz History</h2>
+
+      {% if recent_attempts %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quiz</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Completed</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                {% for attempt in recent_attempts %}
+                <tr class="hover:bg-gray-50 transition-colors">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm font-medium text-gray-900">{{ attempt.quiz.title }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-500">{{ attempt.quiz.course.course_name }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-500">{{ attempt.completed_at|date:"M d, Y" }}</div>
+                    <div class="text-xs text-gray-400">{{ attempt.completed_at|time:"H:i" }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {% if attempt.score >= attempt.quiz.passing_score %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                      {{ attempt.score|floatformat:1 }}%
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if attempt.score >= attempt.quiz.passing_score %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                      {% if attempt.score >= attempt.quiz.passing_score %}
+                        <span class="icon-fallback" style="width: 12px; height: 12px; margin-right: 4px;">✅</span> Passed
+                      {% else %}
+                        <span class="icon-fallback" style="width: 12px; height: 12px; margin-right: 4px;">❌</span> Failed
+                      {% endif %}
+                    </span>
+                  </td>
+                  
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    {% if attempt.quiz.id %}
+                    <a href="{% url 'quiz_result' attempt.quiz.id %}" class="text-indigo-600 hover:text-indigo-900 mr-4">View Result</a>
+                    <a href="{% url 'take_quiz' attempt.quiz.id %}" class="text-gray-600 hover:text-gray-900">Retake</a>
+                    {% else %}
+                    <span class="text-gray-400 mr-4">View Result</span>
+                    <span class="text-gray-400">Retake</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {% else %}
+        <div class="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
+          <span class="icon-fallback" style="width: 64px; height: 64px; color: #d1d5db; margin: 0 auto 16px;">📝</span>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">No quiz attempts yet</h3>
+          <p class="text-gray-500 mb-4">Complete your first quiz to see results here</p>
+          <a href="{% url 'my_courses' %}" class="bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors">
+            Browse Courses
+          </a>
+        </div>
+      {% endif %}
+    </section>
+
+    <!-- Performance Overview -->
+    <section class="mb-8">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">Performance Overview</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Recent Performance -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <span class="icon-fallback" style="color: #10b981;">📈</span>
+            Recent Performance
+          </h3>
+          <div class="space-y-4">
+            {% for attempt in recent_attempts|slice:":3" %}
+            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+              <div class="flex-1">
+                <h4 class="font-medium text-gray-900">{{ attempt.quiz.title }}</h4>
+                <p class="text-sm text-gray-500">{{ attempt.quiz.course.course_name }}</p>
+              </div>
+              <div class="text-right">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if attempt.score >= attempt.quiz.passing_score %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                  {{ attempt.score|floatformat:1 }}%
+                </span>
+                <p class="text-xs text-gray-500 mt-1">{{ attempt.completed_at|date:"M d" }}</p>
+              </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-4 text-gray-500">
+              <span class="icon-fallback" style="width: 32px; height: 32px; color: #d1d5db; margin: 0 auto 8px;">📊</span>
+              <p>No quiz data available</p>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <span class="icon-fallback" style="color: #f59e0b;">⚡</span>
+            Quick Actions
+          </h3>
+          <div class="space-y-3">
+            <a href="{% url 'my_courses' %}" class="flex items-center p-3 border border-gray-200 rounded-lg hover:border-indigo-300 hover:bg-indigo-50 transition-colors">
+              <span class="icon-fallback" style="color: #4f46e5; margin-right: 12px;">📚</span>
+              <span class="font-medium text-gray-900">Review Course Materials</span>
+            </a>
+            <a href="{% url 'performance' %}" class="flex items-center p-3 border border-gray-200 rounded-lg hover:border-indigo-300 hover:bg-indigo-50 transition-colors">
+              <span class="icon-fallback" style="color: #4f46e5; margin-right: 12px;">📈</span>
+              <span class="font-medium text-gray-900">View Detailed Analytics</span>
+            </a>
+            
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+  // Initialize Lucide icons with error handling
+  function initializeIcons() {
+    try {
+      if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+        console.log('Lucide icons initialized successfully');
+      } else {
+        console.warn('Lucide not available, using fallback icons');
+        showFallbackIcons();
+      }
+    } catch (error) {
+      console.error('Error initializing Lucide icons:', error);
+      showFallbackIcons();
+    }
+  }
+
+  // Show fallback icons if Lucide fails
+  function showFallbackIcons() {
+    const fallbackIcons = document.querySelectorAll('.icon-fallback');
+    fallbackIcons.forEach(icon => {
+      icon.style.display = 'inline-block';
+    });
+  }
+
+  // UI interaction functions
+  function toggleDropdown() {
+    document.getElementById("profileDropdown").classList.toggle("hidden");
+  }
+  
+  function toggleMobileMenu() {
+    document.getElementById("sidebar").classList.toggle("open");
+  }
+  
+  // Close dropdown when clicking outside
+  window.onclick = function(event) {
+    if (!event.target.matches('.profile-button') && !event.target.closest('.profile-button')) {
+      const dropdown = document.getElementById("profileDropdown");
+      if (!dropdown.classList.contains('hidden')) {
+        dropdown.classList.add('hidden');
+      }
+    }
+  }
+
+  // Event handlers for interactive elements
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize icons
+    initializeIcons();
+    
+    // Close dropdown when clicking on menu items
+    document.querySelectorAll('#profileDropdown a, #profileDropdown button').forEach(item => {
+      item.addEventListener('click', function() {
+        document.getElementById("profileDropdown").classList.add("hidden");
+      });
+    });
+  });
+</script>
+</body>
+</html>

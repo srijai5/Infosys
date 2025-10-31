@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Result: {{ quiz.title }} | StudyPortal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .sidebar-link { 
+            display: flex; 
+            align-items: center; 
+            padding: 0.75rem 1rem; 
+            border-radius: 0.5rem; 
+            transition: all 0.2s ease-in-out;
+            margin-bottom: 0.25rem;
+        }
+        
+        .sidebar-link:hover { 
+            background-color: rgba(79, 70, 229, 0.08); 
+            color: #4F46E5; 
+        }
+        
+        .sidebar-active { 
+            background-color: rgba(79, 70, 229, 0.12); 
+            color: #4F46E5; 
+            font-weight: 600;
+            position: relative;
+        }
+        
+        .sidebar-active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background-color: #4F46E5;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .stats-card {
+            transition: all 0.2s ease;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        }
+        
+        .gradient-sidebar {
+            background: linear-gradient(180deg, #4F46E5 0%, #7C73E6 100%);
+        }
+        
+        .result-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.5rem;
+            margin: 0 auto;
+        }
+        
+        .score-excellent {
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: white;
+        }
+        
+        .score-good {
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+            color: white;
+        }
+        
+        .score-average {
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            color: white;
+        }
+        
+        .score-poor {
+            background: linear-gradient(135deg, #ef4444, #f87171);
+            color: white;
+        }
+        
+        .question-review {
+            border-left: 4px solid #e5e7eb;
+            transition: all 0.2s ease;
+        }
+        
+        .question-review.correct {
+            border-left-color: #10b981;
+            background-color: #f0fdf4;
+        }
+        
+        .question-review.incorrect {
+            border-left-color: #ef4444;
+            background-color: #fef2f2;
+        }
+
+        .retake-badge {
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-fill.excellent {
+            background: linear-gradient(90deg, #10b981, #34d399);
+        }
+
+        .progress-fill.good {
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+        }
+
+        .progress-fill.average {
+            background: linear-gradient(90deg, #f59e0b, #fbbf24);
+        }
+
+        .progress-fill.poor {
+            background: linear-gradient(90deg, #ef4444, #f87171);
+        }
+        
+        .unanswered-badge {
+            background: linear-gradient(135deg, #6b7280, #9ca3af);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Fallback icon styles */
+        .icon-fallback {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0 !important;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+<div class="flex min-h-screen">
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn fixed top-4 left-4 z-20 bg-indigo-600 text-white p-2 rounded-lg md:hidden" onclick="toggleMobileMenu()">
+        <span class="icon-fallback">☰</span>
+    </button>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar fixed inset-y-0 left-0 w-64 gradient-sidebar text-white shadow-xl z-10 md:translate-x-0">
+        <div class="flex flex-col h-full">
+            <div class="px-6 py-5 border-b border-indigo-500/30">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center mr-3">
+                        <span class="text-indigo-600 font-bold text-xl">🎓</span>
+                    </div>
+                    <h1 class="text-xl font-bold text-white">StudyPortal</h1>
+                </div>
+            </div>
+            
+            <nav class="flex-1 px-4 py-6 space-y-1">
+                <a href="{% url 'student_dashboard' %}" class="sidebar-link text-indigo-100 hover:text-white">
+                    <span class="icon-fallback">📊</span> Dashboard
+                </a>
+                <a href="{% url 'my_courses' %}" class="sidebar-link text-indigo-100 hover:text-white">
+                    <span class="icon-fallback">🎓</span> My Courses
+                </a>
+                <a href="{% url 'student_quizzes' %}" class="sidebar-link sidebar-active text-white">
+                    <span class="icon-fallback">📝</span> Quizzes
+                </a>
+                <a href="{% url 'performance' %}" class="sidebar-link text-indigo-100 hover:text-white">
+                    <span class="icon-fallback">📈</span> Performance
+                </a>
+                
+                <a href="{% url 'settings' %}" class="sidebar-link text-indigo-100 hover:text-white">
+                    <span class="icon-fallback">⚙️</span> Settings
+                </a>
+            </nav>
+            
+            <div class="p-4 border-t border-indigo-500/30">
+                <div class="flex items-center mb-4 px-2">
+                    <div class="w-10 h-10 rounded-full bg-indigo-400 flex items-center justify-center text-white font-bold mr-3">
+                        {{ user.username|first|upper }}
+                    </div>
+                    <div>
+                        <p class="text-white font-medium text-sm">{{ user.username }}</p>
+                        <p class="text-indigo-200 text-xs">Student</p>
+                    </div>
+                </div>
+                
+                <form method="post" action="{% url 'student_logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-btn flex items-center w-full text-indigo-200 hover:text-white py-2 px-2 rounded-lg hover:bg-indigo-500/20 transition-colors">
+                        <span class="icon-fallback">🚪</span> Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content flex-1 md:ml-64 p-6">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Quiz Results</h1>
+                <p class="text-gray-500 mt-1">{{ quiz.title }} - {{ quiz.course.course_name }}</p>
+                <div class="flex space-x-2 mt-2">
+                    {% if is_retake %}
+                    <span class="retake-badge inline-flex items-center">
+                        <span class="icon-fallback" style="width: 12px; height: 12px; margin-right: 4px;">🔄</span>
+                        Retake Attempt
+                    </span>
+                    {% endif %}
+                    {% if unanswered_questions > 0 %}
+                    <span class="unanswered-badge inline-flex items-center">
+                        <span class="icon-fallback" style="width: 12px; height: 12px; margin-right: 4px;">❓</span>
+                        {{ unanswered_questions }} Unanswered
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <button onclick="toggleDropdown()" class="profile-button flex items-center space-x-2 bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm hover:shadow transition-all">
+                        <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
+                            {{ user.username|first|upper }}
+                        </div>
+                        <span class="text-gray-700 font-medium hidden sm:block">{{ user.username }}</span>
+                        <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 0;">▼</span>
+                    </button>
+                    
+                    <div id="profileDropdown" class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-10 hidden">
+                        <div class="px-4 py-3 border-b border-gray-100">
+                            <p class="font-semibold text-gray-900">{{ user.username }}</p>
+                            <p class="text-sm text-gray-500">Student Account</p>
+                        </div>
+                        <div class="p-2">
+                            <a href="{% url 'settings' %}" class="settings-menu-item flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                                <span class="icon-fallback" style="margin-right: 8px;">⚙️</span> Settings
+                            </a>
+                        </div>
+                        <div class="p-2 border-t border-gray-100">
+                            <form method="post" action="{% url 'student_logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="flex items-center w-full px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                    <span class="icon-fallback" style="margin-right: 8px;">🚪</span> Logout
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Result Summary -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Score Card -->
+            <div class="result-card p-6">
+                <div class="text-center">
+                    <!-- FIXED: Proper score calculation and display -->
+                    {% with actual_correct=correct_answers|default:0 %}
+                    {% with actual_total=total_questions|default:1 %}
+                    {% with calculated_score=actual_correct|floatformat:0 %}
+                    
+                    {% if score_percentage >= 90 %}
+                    <div class="score-circle score-excellent mb-4">
+                        {{ score_percentage|floatformat:1 }}%
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Excellent!</h3>
+                    <p class="text-green-600 font-medium">Outstanding performance</p>
+                    {% elif score_percentage >= 80 %}
+                    <div class="score-circle score-good mb-4">
+                        {{ score_percentage|floatformat:1 }}%
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Great Job!</h3>
+                    <p class="text-blue-600 font-medium">Well done</p>
+                    {% elif score_percentage >= quiz.passing_score %}
+                    <div class="score-circle score-average mb-4">
+                        {{ score_percentage|floatformat:1 }}%
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Good Work</h3>
+                    <p class="text-amber-600 font-medium">You passed!</p>
+                    {% else %}
+                    <div class="score-circle score-poor mb-4">
+                        {{ score_percentage|floatformat:1 }}%
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Keep Practicing</h3>
+                    <p class="text-red-600 font-medium">You need {{ quiz.passing_score }}% to pass</p>
+                    {% endif %}
+                    
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    
+                    <!-- Progress Bar -->
+                    <div class="mt-4">
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>Score</span>
+                            <span>{{ score_percentage|floatformat:1 }}% ({{ correct_answers }}/{{ total_questions }})</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill {% if score_percentage >= 90 %}excellent{% elif score_percentage >= 80 %}good{% elif score_percentage >= quiz.passing_score %}average{% else %}poor{% endif %}" 
+                                 style="width: {% if score_percentage > 100 %}100{% else %}{{ score_percentage }}{% endif %}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quiz Details -->
+            <div class="result-card p-6">
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Total Questions</span>
+                        <span class="font-semibold">{{ total_questions }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Correct Answers</span>
+                        <span class="font-semibold text-green-600">{{ correct_answers }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Incorrect Answers</span>
+                        <span class="font-semibold text-red-600">{{ incorrect_answers }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Unanswered</span>
+                        <span class="font-semibold text-gray-500">{{ unanswered_questions }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Passing Score</span>
+                        <span class="font-semibold">{{ quiz.passing_score }}%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attempt Details -->
+            <div class="result-card p-6">
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Date Completed</span>
+                        <span class="font-semibold">{{ completion_date|date:"M d, Y" }}</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Time Completed</span>
+                        <span class="font-semibold">{{ completion_date|time:"g:i A" }}</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Points Earned</span>
+                        <span class="font-semibold text-blue-600">{{ points_earned }}/{{ total_points }}</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Status</span>
+                        <span class="font-semibold {% if score_percentage >= quiz.passing_score %}text-green-600{% else %}text-red-600{% endif %}">
+                            {% if score_percentage >= quiz.passing_score %}
+                            <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 4px;">✅</span>Passed
+                            {% else %}
+                            <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 4px;">❌</span>Failed
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Performance Insights -->
+        {% if score_percentage >= quiz.passing_score %}
+        <div class="result-card p-6 mb-6 bg-green-50 border border-green-200">
+            <div class="flex items-start">
+                <span class="icon-fallback" style="color: #059669; margin-right: 12px;">🏆</span>
+                <div>
+                    <h3 class="text-lg font-semibold text-green-800 mb-2">Quiz Completed Successfully!</h3>
+                    <p class="text-green-700">
+                        Congratulations! You've passed this quiz with a score of {{ score_percentage|floatformat:1 }}%. 
+                        You answered {{ correct_answers }} out of {{ total_questions }} questions correctly.
+                        {% if score_percentage >= 90 %}
+                        Your exceptional performance shows you've mastered this material.
+                        {% elif score_percentage >= 80 %}
+                        Your strong performance demonstrates good understanding of the concepts.
+                        {% else %}
+                        You've successfully demonstrated the required knowledge for this quiz.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="result-card p-6 mb-6 bg-amber-50 border border-amber-200">
+            <div class="flex items-start">
+                <span class="icon-fallback" style="color: #d97706; margin-right: 12px;">💡</span>
+                <div>
+                    <h3 class="text-lg font-semibold text-amber-800 mb-2">Areas for Improvement</h3>
+                    <p class="text-amber-700">
+                        You scored {{ score_percentage|floatformat:1 }}% ({{ correct_answers }}/{{ total_questions }} correct), 
+                        which is below the passing score of {{ quiz.passing_score }}%. 
+                        {% if unanswered_questions > 0 %}
+                        You left {{ unanswered_questions }} question(s) unanswered.
+                        {% endif %}
+                        Review the questions below and consider retaking the quiz to improve your score.
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Question Review -->
+        <section class="result-card p-6 mb-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Question Review</h2>
+                <div class="flex items-center space-x-4 text-sm">
+                    <span class="flex items-center text-green-600">
+                        <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 4px;">✅</span>
+                        {{ correct_answers }} Correct
+                    </span>
+                    <span class="flex items-center text-red-600">
+                        <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 4px;">❌</span>
+                        {{ incorrect_answers }} Incorrect
+                    </span>
+                    {% if unanswered_questions > 0 %}
+                    <span class="flex items-center text-gray-500">
+                        <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 4px;">❓</span>
+                        {{ unanswered_questions }} Unanswered
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="space-y-6">
+                {% for review in question_reviews %}
+                <div class="question-review p-6 rounded-lg {% if review.is_correct %}correct{% else %}incorrect{% endif %} 
+                            {% if review.answer_status == 'unanswered' %}bg-gray-50{% endif %}">
+                    <div class="flex items-start justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">
+                            <span class="text-indigo-600">Q{{ forloop.counter }}.</span> 
+                            {{ review.question_text }}
+                        </h3>
+                        <div class="flex items-center space-x-2">
+                            {% if review.answer_status == 'unanswered' %}
+                            <span class="flex items-center text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                                <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 4px;">❓</span>
+                                Unanswered
+                            </span>
+                            {% else %}
+                            <span class="flex items-center text-sm font-medium {% if review.is_correct %}text-green-600 bg-green-100{% else %}text-red-600 bg-red-100{% endif %} px-3 py-1 rounded-full">
+                                {% if review.is_correct %}
+                                <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 4px;">✅</span>
+                                Correct
+                                {% else %}
+                                <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 4px;">❌</span>
+                                Incorrect
+                                {% endif %}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 {% if review.answer_status == 'unanswered' or not review.is_correct %}md:grid-cols-2{% endif %} gap-4">
+                        <div>
+                            <h4 class="font-medium text-gray-700 mb-2">Your Answer</h4>
+                            <div class="p-3 rounded-lg 
+                                {% if review.answer_status == 'unanswered' %}bg-gray-100 text-gray-700 border border-gray-300
+                                {% elif review.is_correct %}bg-green-50 text-green-700 border border-green-200
+                                {% else %}bg-red-50 text-red-700 border border-red-200{% endif %}">
+                                <div class="flex items-center">
+                                    {% if review.answer_status == 'unanswered' %}
+                                    <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 8px; color: #6b7280;">❓</span>
+                                    <span class="text-gray-600 font-medium">Not answered</span>
+                                    {% elif review.is_correct %}
+                                    <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 8px; color: #059669;">✅</span>
+                                    <span class="font-medium">{{ review.user_answer }}</span>
+                                    {% else %}
+                                    <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 8px; color: #dc2626;">❌</span>
+                                    <span class="font-medium">{{ review.user_answer }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if review.answer_status == 'unanswered' or not review.is_correct %}
+                        <div>
+                            <h4 class="font-medium text-gray-700 mb-2">Correct Answer</h4>
+                            <div class="p-3 rounded-lg bg-green-50 text-green-700 border border-green-200">
+                                <div class="flex items-center">
+                                    <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 8px; color: #059669;">✅</span>
+                                    <span class="font-medium">{{ review.correct_answer }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if review.explanation and review.explanation != "No explanation available." %}
+                    <div class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <h4 class="font-medium text-blue-700 mb-2 flex items-center">
+                            <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 8px; color: #2563eb;">ℹ️</span>
+                            Explanation
+                        </h4>
+                        <p class="text-blue-600">{{ review.explanation }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div class="text-center py-8 text-gray-500">
+                    <span class="icon-fallback" style="width: 48px; height: 48px; color: #9ca3af; margin: 0 auto 16px;">❓</span>
+                    <p>No question reviews available.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{% url 'student_quizzes' %}" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors font-medium text-center flex items-center justify-center">
+                <span class="icon-fallback" style="margin-right: 8px;">📝</span>
+                Back to Quizzes
+            </a>
+            
+            <a href="{% url 'course_detail' quiz.course.id %}" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium text-center flex items-center justify-center">
+                <span class="icon-fallback" style="margin-right: 8px;">📚</span>
+                Back to Course
+            </a>
+            
+            <a href="{% url 'performance' %}" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium text-center flex items-center justify-center">
+                <span class="icon-fallback" style="margin-right: 8px;">📈</span>
+                View Performance
+            </a>
+            
+            {% if score_percentage < quiz.passing_score or unanswered_questions > 0 %}
+            <a href="{% url 'take_quiz' quiz.id %}" class="bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700 transition-colors font-medium text-center flex items-center justify-center">
+                <span class="icon-fallback" style="margin-right: 8px;">🔄</span>
+                {% if score_percentage < quiz.passing_score %}Retake Quiz{% else %}Complete Unanswered{% endif %}
+            </a>
+            {% else %}
+            <a href="{% url 'take_quiz' quiz.id %}" class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium text-center flex items-center justify-center">
+                <span class="icon-fallback" style="margin-right: 8px;">🔄</span>
+                Try Again
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize Lucide icons with error handling
+    function initializeIcons() {
+        try {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+                console.log('Lucide icons initialized successfully');
+            } else {
+                console.warn('Lucide not available, using fallback icons');
+                showFallbackIcons();
+            }
+        } catch (error) {
+            console.error('Error initializing Lucide icons:', error);
+            showFallbackIcons();
+        }
+    }
+
+    // Show fallback icons if Lucide fails
+    function showFallbackIcons() {
+        const fallbackIcons = document.querySelectorAll('.icon-fallback');
+        fallbackIcons.forEach(icon => {
+            icon.style.display = 'inline-block';
+        });
+    }
+
+    // UI interaction functions
+    function toggleDropdown() {
+        document.getElementById("profileDropdown").classList.toggle("hidden");
+    }
+    
+    function toggleMobileMenu() {
+        document.getElementById("sidebar").classList.toggle("open");
+    }
+    
+    // Close dropdown when clicking outside
+    window.onclick = function(event) {
+        if (!event.target.matches('.profile-button') && !event.target.closest('.profile-button')) {
+            const dropdown = document.getElementById("profileDropdown");
+            if (!dropdown.classList.contains('hidden')) {
+                dropdown.classList.add('hidden');
+            }
+        }
+    }
+
+    // Event handlers for interactive elements
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize icons
+        initializeIcons();
+        
+        // Close dropdown when clicking on menu items
+        document.querySelectorAll('#profileDropdown a, #profileDropdown button').forEach(item => {
+            item.addEventListener('click', function() {
+                document.getElementById("profileDropdown").classList.add("hidden");
+            });
+        });
+
+        // Add animation to progress bars
+        const progressBars = document.querySelectorAll('.progress-fill');
+        progressBars.forEach(bar => {
+            const width = bar.style.width;
+            bar.style.width = '0';
+            setTimeout(() => {
+                bar.style.width = width;
+            }, 100);
+        });
+    });
+
+    // Print functionality
+    function printQuizResult() {
+        window.print();
+    }
+</script>
+</body>
+</html>

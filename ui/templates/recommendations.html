@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Recommendations | StudyPortal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    body { 
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+    }
+    
+    .sidebar-link { 
+      display: flex; 
+      align-items: center; 
+      padding: 0.75rem 1rem; 
+      border-radius: 0.5rem; 
+      transition: all 0.2s ease-in-out;
+      margin-bottom: 0.25rem;
+    }
+    
+    .sidebar-link:hover { 
+      background-color: rgba(79, 70, 229, 0.08); 
+      color: #4F46E5; 
+    }
+    
+    .sidebar-active { 
+      background-color: rgba(79, 70, 229, 0.12); 
+      color: #4F46E5; 
+      font-weight: 600;
+      position: relative;
+    }
+    
+    .sidebar-active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 4px;
+      background-color: #4F46E5;
+      border-radius: 0 4px 4px 0;
+    }
+    
+    .gradient-sidebar {
+      background: linear-gradient(180deg, #4F46E5 0%, #7C73E6 100%);
+    }
+
+    .icon-fallback {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      margin-right: 12px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+      }
+      
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      
+      .main-content {
+        margin-left: 0 !important;
+      }
+      
+      .mobile-menu-btn {
+        display: block;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+
+<div class="flex min-h-screen">
+  <!-- Mobile Menu Button -->
+  <button class="mobile-menu-btn fixed top-4 left-4 z-20 bg-indigo-600 text-white p-2 rounded-lg md:hidden" onclick="toggleMobileMenu()">
+    <span class="icon-fallback">☰</span>
+  </button>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar fixed inset-y-0 left-0 w-64 gradient-sidebar text-white shadow-xl z-10 md:translate-x-0">
+    <div class="flex flex-col h-full">
+      <div class="px-6 py-5 border-b border-indigo-500/30">
+        <div class="flex items-center">
+          <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center mr-3">
+            <span class="text-indigo-600 font-bold text-xl">🎓</span>
+          </div>
+          <h1 class="text-xl font-bold text-white">StudyPortal</h1>
+        </div>
+      </div>
+      
+      <nav class="flex-1 px-4 py-6 space-y-1">
+        <a href="{% url 'student_dashboard' %}" class="sidebar-link text-indigo-100 hover:text-white">
+          <span class="icon-fallback">📊</span> Dashboard
+        </a>
+        <a href="{% url 'my_courses' %}" class="sidebar-link text-indigo-100 hover:text-white">
+          <span class="icon-fallback">🎓</span> My Courses
+        </a>
+        <a href="{% url 'student_quizzes' %}" class="sidebar-link text-indigo-100 hover:text-white">
+          <span class="icon-fallback">📝</span> Quizzes
+        </a>
+        <a href="{% url 'performance' %}" class="sidebar-link text-indigo-100 hover:text-white">
+          <span class="icon-fallback">📈</span> Performance
+        </a>
+        <a href="{% url 'recommendations' %}" class="sidebar-link sidebar-active text-white">
+          <span class="icon-fallback">✨</span> AI Recommendations
+        </a>
+        <a href="{% url 'settings' %}" class="sidebar-link text-indigo-100 hover:text-white">
+          <span class="icon-fallback">⚙️</span> Settings
+        </a>
+      </nav>
+      
+      <div class="p-4 border-t border-indigo-500/30">
+        <div class="flex items-center mb-4 px-2">
+          <div class="w-10 h-10 rounded-full bg-indigo-400 flex items-center justify-center text-white font-bold mr-3">
+            {{ user.username|first|upper }}
+          </div>
+          <div>
+            <p class="text-white font-medium text-sm">{{ user.username }}</p>
+            <p class="text-indigo-200 text-xs">Student</p>
+          </div>
+        </div>
+        
+        <form method="post" action="{% url 'student_logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="logout-btn flex items-center w-full text-indigo-200 hover:text-white py-2 px-2 rounded-lg hover:bg-indigo-500/20 transition-colors">
+            <span class="icon-fallback">🚪</span> Logout
+          </button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content flex-1 md:ml-64 p-6">
+    <!-- Header -->
+    <header class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">AI Recommendations ✨</h1>
+        <p class="text-gray-500 mt-1">Personalized suggestions based on your learning progress</p>
+      </div>
+      
+      <div class="flex items-center space-x-4">
+        <div class="relative">
+          <button onclick="toggleDropdown()" class="profile-button flex items-center space-x-2 bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm hover:shadow transition-all">
+            <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
+              {{ user.username|first|upper }}
+            </div>
+            <span class="text-gray-700 font-medium hidden sm:block">{{ user.username }}</span>
+            <span class="icon-fallback" style="width: 16px; height: 16px; margin-right: 0;">▼</span>
+          </button>
+          
+          <div id="profileDropdown" class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-10 hidden">
+            <div class="px-4 py-3 border-b border-gray-100">
+              <p class="font-semibold text-gray-900">{{ user.username }}</p>
+              <p class="text-sm text-gray-500">Student Account</p>
+            </div>
+            <div class="p-2">
+              <a href="{% url 'settings' %}" class="settings-menu-item flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                <span class="icon-fallback" style="margin-right: 8px;">⚙️</span> Settings
+              </a>
+            </div>
+            <div class="p-2 border-t border-gray-100">
+              <form method="post" action="{% url 'student_logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="flex items-center w-full px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                  <span class="icon-fallback" style="margin-right: 8px;">🚪</span> Logout
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- AI Recommendations Section -->
+    <section class="mb-8">
+      <div class="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-6 mb-6">
+        <div class="flex items-start">
+          <div class="bg-indigo-100 p-3 rounded-lg mr-4">
+            <span class="icon-fallback" style="color: #4f46e5;">🤖</span>
+          </div>
+          <div class="flex-1">
+            <h3 class="text-lg font-semibold text-indigo-900 mb-2">AI-Powered Learning Recommendations</h3>
+            <p class="text-indigo-700 text-sm">
+              These personalized suggestions are generated by analyzing your course progress and quiz performance.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recommendations List -->
+      <div class="space-y-4">
+        {% for recommendation in ai_recommendations %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div class="flex items-start">
+            <div class="
+              {% if recommendation.color == 'green' %}bg-green-100 text-green-600
+              {% elif recommendation.color == 'blue' %}bg-blue-100 text-blue-600
+              {% elif recommendation.color == 'amber' %}bg-amber-100 text-amber-600
+              {% elif recommendation.color == 'red' %}bg-red-100 text-red-600
+              {% else %}bg-indigo-100 text-indigo-600{% endif %} 
+              p-3 rounded-lg mr-4">
+              <span class="icon-fallback">{{ recommendation.icon }}</span>
+            </div>
+            <div class="flex-1">
+              <h4 class="text-lg font-semibold 
+                {% if recommendation.color == 'green' %}text-green-800
+                {% elif recommendation.color == 'blue' %}text-blue-800
+                {% elif recommendation.color == 'amber' %}text-amber-800
+                {% elif recommendation.color == 'red' %}text-red-800
+                {% else %}text-indigo-800{% endif %} 
+                mb-2">
+                {{ recommendation.title }}
+              </h4>
+              <p class="
+                {% if recommendation.color == 'green' %}text-green-700
+                {% elif recommendation.color == 'blue' %}text-blue-700
+                {% elif recommendation.color == 'amber' %}text-amber-700
+                {% elif recommendation.color == 'red' %}text-red-700
+                {% else %}text-indigo-700{% endif %} 
+                text-sm">
+                {{ recommendation.message }}
+              </p>
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
+          <span class="icon-fallback" style="width: 48px; height: 48px; color: #d1d5db; margin: 0 auto 12px;">📚</span>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">No recommendations yet</h3>
+          <p class="text-gray-500">Start learning courses and taking quizzes to get personalized recommendations!</p>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Quick Stats -->
+    <section class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
+        <div class="mr-4 p-3 rounded-lg bg-indigo-50 text-indigo-600">
+          <span class="icon-fallback">📚</span>
+        </div>
+        <div>
+          <p class="text-gray-500 text-sm">Total Courses</p>
+          <p class="text-2xl font-bold text-gray-900">{{ total_courses }}</p>
+        </div>
+      </div>
+      
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
+        <div class="mr-4 p-3 rounded-lg bg-green-50 text-green-600">
+          <span class="icon-fallback">✅</span>
+        </div>
+        <div>
+          <p class="text-gray-500 text-sm">Completed</p>
+          <p class="text-2xl font-bold text-gray-900">{{ completed_courses }}</p>
+        </div>
+      </div>
+      
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
+        <div class="mr-4 p-3 rounded-lg bg-amber-50 text-amber-600">
+          <span class="icon-fallback">⏱️</span>
+        </div>
+        <div>
+          <p class="text-gray-500 text-sm">In Progress</p>
+          <p class="text-2xl font-bold text-gray-900">{{ in_progress_courses }}</p>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
+        <div class="mr-4 p-3 rounded-lg bg-purple-50 text-purple-600">
+          <span class="icon-fallback">✨</span>
+        </div>
+        <div>
+          <p class="text-gray-500 text-sm">Recommendations</p>
+          <p class="text-2xl font-bold text-gray-900">{{ ai_recommendations|length }}</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+  // Simple UI interactions
+  function toggleDropdown() {
+    document.getElementById("profileDropdown").classList.toggle("hidden");
+  }
+  
+  function toggleMobileMenu() {
+    document.getElementById("sidebar").classList.toggle("open");
+  }
+  
+  // Close dropdown when clicking outside
+  window.onclick = function(event) {
+    if (!event.target.matches('.profile-button') && !event.target.closest('.profile-button')) {
+      const dropdown = document.getElementById("profileDropdown");
+      if (!dropdown.classList.contains('hidden')) {
+        dropdown.classList.add('hidden');
+      }
+    }
+  }
+
+  // Show fallback icons
+  document.addEventListener('DOMContentLoaded', function() {
+    const fallbackIcons = document.querySelectorAll('.icon-fallback');
+    fallbackIcons.forEach(icon => {
+      icon.style.display = 'inline-block';
+    });
+  });
+</script>
+</body>
+</html>
