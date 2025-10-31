@@ -87,14 +87,18 @@ Introduced AI integration for intelligent reminders, quiz alerts, and completion
    git clone https://github.com/srijai5/Infosys.git
 
 # **Create a virtual environment**
+```bash
 python -m venv venv
 
 # **Activate the virtual environment (Windows)**
+```bash
 venv\Scripts\activate
 
 # **For macOS / Linux users**
+```bash
 source venv/bin/activate
 # **Install Dependencies**
+```bash
 pip install django
 pip install mysqlclient
 pip install celery
@@ -103,12 +107,14 @@ pip install django-widget-tweaks
 
 # **Setup MySQL Database**
 
-
+```bash
 mysql -u root -p -e "CREATE DATABASE studytrack;
 
 
 # **Run Migrations**
+```bash
 python manage.py makemigrations
 python manage.py migrate
 # **Start the Development Server**
+```bash
 python manage.py runserver
