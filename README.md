@@ -82,7 +82,16 @@ Introduced AI integration for intelligent reminders, quiz alerts, and completion
 
 🛠️ Installation & Setup
 
-1. **Clone the repository**
+# **Clone the repository**
    ```bash
    git clone https://github.com/srijai5/Infosys.git
+
+# Create a virtual environment
+python -m venv venv
+
+# Activate the virtual environment (Windows)
+venv\Scripts\activate
+
+# For macOS / Linux users
+source venv/bin/activate
 
