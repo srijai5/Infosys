@@ -38,9 +38,9 @@ This project was developed as part of our academic milestone series to integrate
 
 | Layer | Technologies Used |
 |-------|-------------------|
-| **Frontend** | HTML, CSS, JavaScript, Bootstrap |
+| **Frontend** | HTML, CSS |
 | **Backend** | Python (Django / Flask) |
-| **Database** | MySQL / SQLite |
+| **Database** | MySQL |
 | **AI & ML** | Scikit-learn, TensorFlow, Pandas, NumPy |
 | **Email & Notifications** | SMTP, Celery / Cron Jobs |
 | **Visualization** | Matplotlib, Seaborn, Chart.js |
