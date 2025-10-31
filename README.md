@@ -38,7 +38,7 @@ This project was developed as part of our academic milestone series to integrate
 
 | Layer | Technologies Used |
 |-------|-------------------|
-| **Frontend** | HTML, CSS |
+| **Frontend** | HTML, CSS, JavaScript |
 | **Backend** | Python (Django / Flask) |
 | **Database** | MySQL |
 | **AI & ML** | Scikit-learn, TensorFlow, Pandas, NumPy |
