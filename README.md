@@ -84,7 +84,7 @@ Introduced AI integration for intelligent reminders, quiz alerts, and completion
 
 # **Clone the repository**
    ```bash
-   git clone https://github.com/srijai5/Infosys.git
+   git clone https://github.com/srijai5/StudyTrack.git
 ```
 
 # **Create a virtual environment**
