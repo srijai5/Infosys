@@ -120,6 +120,6 @@ python manage.py makemigrations
 python manage.py migrate
 ```
 ## **Start the Development Server**
-
+```bash
 python manage.py runserver
 ```
